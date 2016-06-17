@@ -32,15 +32,16 @@
 }
 
 /* the multiselect button */
+/* modified by sun */
 .multiSelect > button {
     display: inline-block;
     position: relative;
-    text-align: center;    
+    text-align: right;    
     cursor: pointer;
     border: 1px solid #c6c6c6;    
     padding: 1px 8px 1px 8px;    
     font-size: 14px;
-    min-height : 38px !important;
+    min-height : 34px !important;
     border-radius: 4px;
     color: #555;   
     -webkit-user-select: none;
@@ -114,7 +115,6 @@
     text-align: center;
     cursor: pointer;
     border: 1px solid #ccc;
-    height: 26px;
     font-size: 13px;
     border-radius: 2px;
     color: #666;    
