@@ -36,7 +36,7 @@
 .multiSelect > button {
     display: inline-block;
     position: relative;
-    text-align: right;    
+    text-align:right;    
     cursor: pointer;
     border: 1px solid #c6c6c6;    
     padding: 1px 8px 1px 8px;    
@@ -75,6 +75,8 @@
 .multiSelect .buttonLabel {
     display: inline-block;
     padding: 5px 0px 5px 0px; 
+    text-align:left;
+    folat:left;
 }
 
 /* downward pointing arrow */
@@ -82,12 +84,13 @@
     display: inline-block;
     width: 0;
     height: 0;
-    margin: 0px 0px 1px 12px  !important;    
+    margin: 0px 0px 1px 14px  !important;    
     vertical-align: middle;
     border-top: 4px solid #333;
     border-right: 4px solid transparent;
     border-left: 4px solid transparent;
     border-bottom: 0 dotted; 
+    text-align:right;
 }
 
 /* the main checkboxes and helper layer */
@@ -192,6 +195,8 @@
     display: block;
     padding: 8px;   
     overflow: hidden;
+    height: 150px;
+    overflow-y:auto;
 }
 
 /* ! to show / hide the checkbox layer above */
