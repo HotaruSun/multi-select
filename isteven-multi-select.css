@@ -195,7 +195,8 @@
     display: block;
     padding: 8px;   
     overflow: hidden;
-    height: 150px;
+    height: auto;
+    max-height: 500px;
     overflow-y:auto;
 }
 

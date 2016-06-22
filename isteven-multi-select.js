@@ -257,29 +257,26 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                 }, 0);
             };
 
+            $scope.hasMore = true;
             $scope.loadMore = function(){
                 // console.log('loadMore');
-                if($scope.inputModel.length === 20){
-                    $scope.searchBean = {fromPage: $scope.inputModel.length, flag: 'scoll'};
+                if($scope.filteredModel.length >= 20){
+                    $scope.searchBean = {fromPage: $scope.filteredModel.length, flag: 'scoller'};
                     $http.post($scope.filterUrl, $scope.searchBean)
                     .success(function(data, status, headers, config) {
                         if (data.status === 'success') {
                             $scope.message = data.message;
                             if (!data.data.curRecord || data.data.curRecord.length === 0) {
+                                $scope.hasMore = false;
                                 return false;
                             }
                             angular.forEach(data.data.curRecord, function(value, key){
-                                // for(var i=0; i<$scope.filterInputModel.length; i++){
-                                //     if($scope.filterInputModel[i].name === value['name']){
-                                //         return;
-                                //     }
-                                // }
-                                $scope.inputModel.push({
+                                $scope.filteredModel.push({
                                     name: value.name,
                                     ticked: value.ticked
                                 });
                             });
-                            $scope.inputModel.reverse();
+                            $scope.filteredModel.reverse();
                             $scope.prepareIndex();
                         } else {
                             console.error(data.message);
@@ -1128,7 +1125,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
         '</div> ' +
         '</div> ' +
         // selection items
-        '<div class="checkBoxContainer" scroll-bottom="loadMore()">' +
+        '<div id="checkBoxContainer" class="checkBoxContainer" scroll-bottom="loadMore()">' +
         '<div ' +
         'ng-repeat="item in filteredModel | filter:removeGroupEndMarker" class="multiSelectItem"' +
         'ng-class="{selected: item[ tickProperty ], horizontal: orientationH, vertical: orientationV, multiSelectGroup:item[ groupProperty ], disabled:itemIsDisabled( item )}"' +
@@ -1154,6 +1151,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
         // the tick/check mark
         '<span class="tickMark" ng-if="item[ groupProperty ] !== true && item[ tickProperty ] === true" ng-bind-html="icon.tickMark"></span>' +
         '</div>' +
+        '<div class="multiSelectItem" ng-if="filteredModel.length >= 20 && hasMore">Load More……</div>'+
         '</div>' +
         '</div>' +
         '</span>';
@@ -1165,8 +1163,13 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
         },
         restrict: 'A',
         link: function(scope, element, attr) {
-            angular.element($window).bind('scroll', function() {
-                if ($(window).scrollTop() + $(window).height() >= element[0].scrollHeight) {
+            var elem = angular.element(checkBoxContainer);
+            elem.bind('scroll', function() {
+                elem = elem[0] || elem;
+                // console.log("$(window).height()>>>>"+elem.offsetHeight);
+                // console.log("scrollTop>>>>"+elem.scrollTop);
+                // console.log("scrollHeight>>>>"+elem.scrollHeight);
+                if (elem.offsetHeight + elem.scrollTop === elem.scrollHeight) {
                     // console.log('scroll');
                     scope.scrollBottom();
                     scope.$apply();
