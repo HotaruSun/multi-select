@@ -1156,7 +1156,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
         '</div>' +
         '</span>';
     $templateCache.put('isteven-multi-select.htm', template);
-}]).directive('scrollBottom', function($window) {
+}]).directive('scrollBottom', function($timeout) {
     return {
         scope: {
             scrollBottom: '&'
@@ -1171,8 +1171,10 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                 // console.log("scrollHeight>>>>"+elem.scrollHeight);
                 if (elem.offsetHeight + elem.scrollTop === elem.scrollHeight) {
                     // console.log('scroll');
-                    scope.scrollBottom();
-                    scope.$apply();
+                    $timeout(function() {
+                        scope.scrollBottom();
+                        scope.$apply();
+                    }, 800);
                 }
             });
             element.on('$destroy', function() {
