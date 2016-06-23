@@ -276,7 +276,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                                     ticked: value.ticked
                                 });
                             });
-                            $scope.filteredModel.reverse();
+                            // $scope.filteredModel.reverse();
                             $scope.prepareIndex();
                         } else {
                             console.error(data.message);
