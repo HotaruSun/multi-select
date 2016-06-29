@@ -275,8 +275,12 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                                     name: value.name,
                                     ticked: value.ticked
                                 });
+                                $scope.filterInputModel.push({
+                                    name: value.name,
+                                    ticked: value.ticked
+                                });
                             });
-                            $scope.filteredModel.reverse();
+                            // $scope.filteredModel.reverse();
                             $scope.prepareIndex();
                         } else {
                             console.error(data.message);
@@ -1166,9 +1170,6 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
             var elem = angular.element(checkBoxContainer);
             elem.bind('scroll', function() {
                 elem = elem[0] || elem;
-                // console.log("$(window).height()>>>>"+elem.offsetHeight);
-                // console.log("scrollTop>>>>"+elem.scrollTop);
-                // console.log("scrollHeight>>>>"+elem.scrollHeight);
                 if (elem.offsetHeight + elem.scrollTop === elem.scrollHeight) {
                     // console.log('scroll');
                     $timeout(function() {
