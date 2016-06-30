@@ -270,8 +270,15 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                                 $scope.hasMore = false;
                                 return false;
                             }
+                            if(data.data.curRecord.length < 20){
+                                $scope.hasMore = false;
+                            }
                             angular.forEach(data.data.curRecord, function(value, key){
                                 $scope.filteredModel.push({
+                                    name: value.name,
+                                    ticked: value.ticked
+                                });
+                                $scope.filterInputModel.push({
                                     name: value.name,
                                     ticked: value.ticked
                                 });
@@ -776,6 +783,13 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                                 }
                             }
                         });
+                        angular.forEach($scope.filterInputModel, function(value, key) {
+                            if (typeof value !== 'undefined' && value[attrs.disableProperty] !== true) {
+                                if (typeof value[attrs.groupProperty] === 'undefined') {
+                                    value[$scope.tickProperty] = true;
+                                }
+                            }
+                        });
                         $scope.refreshOutputModel();
                         $scope.refreshButton();
                         $scope.onSelectAll();
@@ -1166,9 +1180,6 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
             var elem = angular.element(checkBoxContainer);
             elem.bind('scroll', function() {
                 elem = elem[0] || elem;
-                // console.log("$(window).height()>>>>"+elem.offsetHeight);
-                // console.log("scrollTop>>>>"+elem.scrollTop);
-                // console.log("scrollHeight>>>>"+elem.scrollHeight);
                 if (elem.offsetHeight + elem.scrollTop === elem.scrollHeight) {
                     // console.log('scroll');
                     $timeout(function() {
