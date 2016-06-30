@@ -278,10 +278,19 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                                     name: value.name,
                                     ticked: value.ticked
                                 });
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> b2e68e3e6b502829d7c53a0353a0cc8dd27f81b6
                                 $scope.filterInputModel.push({
                                     name: value.name,
                                     ticked: value.ticked
                                 });
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> 1ecb62e67db8cedb737fd5f79184f7f4276477cb
+>>>>>>> b2e68e3e6b502829d7c53a0353a0cc8dd27f81b6
                             });
                             // $scope.filteredModel.reverse();
                             $scope.prepareIndex();
@@ -1180,6 +1189,15 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
             var elem = angular.element(checkBoxContainer);
             elem.bind('scroll', function() {
                 elem = elem[0] || elem;
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+                // console.log("$(window).height()>>>>"+elem.offsetHeight);
+                // console.log("scrollTop>>>>"+elem.scrollTop);
+                // console.log("scrollHeight>>>>"+elem.scrollHeight);
+>>>>>>> 1ecb62e67db8cedb737fd5f79184f7f4276477cb
+>>>>>>> b2e68e3e6b502829d7c53a0353a0cc8dd27f81b6
                 if (elem.offsetHeight + elem.scrollTop === elem.scrollHeight) {
                     // console.log('scroll');
                     $timeout(function() {
