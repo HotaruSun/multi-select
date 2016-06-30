@@ -541,7 +541,9 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                     outputProps = [],
                     tempObj = {};
 
-
+                if($scope.filterInputModel == null || $scope.filterInputModel.length === 0){
+                    $scope.filterInputModel = $scope.inputModel;
+                }
                 // v4.0.0
                 if (typeof attrs.outputProperties !== 'undefined') {
                     outputProps = attrs.outputProperties.split(' ');
