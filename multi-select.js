@@ -1106,14 +1106,14 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
         // container of the first 3 buttons, select all, none and reset
         '<div class="line" ng-if="helperStatus.all || helperStatus.none || helperStatus.reset ">' +
         // select all
-        '<button type="button" class="helperButton"' +
+        '<button name="selectAll" type="button" class="helperButton"' +
         'ng-disabled="isDisabled"' +
         'ng-if="helperStatus.all"' +
         'ng-click="select( \'all\', $event );"' +
         'ng-bind-html="lang.selectAll">' +
         '</button>' +
         // select none
-        '<button type="button" class="helperButton"' +
+        '<button name="selectNone" type="button" class="helperButton"' +
         'ng-disabled="isDisabled"' +
         'ng-if="helperStatus.none"' +
         'ng-click="select( \'none\', $event );"' +
@@ -1131,7 +1131,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
         '<div class="line" style="position:relative" ng-if="helperStatus.filter">' +
         // textfield  
         //modified by sun              
-        '<input placeholder="{{lang.search}}" type="text"' +
+        '<input name="inputFilter" placeholder="{{lang.search}}" type="text"' +
         'ng-click="select( \'filter\', $event )" ' +
         'ng-model="inputLabel.labelFilter" ' +
         'ng-change="searchChanged()" class="inputFilter"' +
@@ -1142,7 +1142,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
         '</div> ' +
         // selection items
         '<div id="checkBoxContainer" class="checkBoxContainer" scroll-bottom="loadMore()">' +
-        '<div ' +
+        '<div name="{{item.name}}" ' +
         'ng-repeat="item in filteredModel | filter:removeGroupEndMarker" class="multiSelectItem"' +
         'ng-class="{selected: item[ tickProperty ], horizontal: orientationH, vertical: orientationV, multiSelectGroup:item[ groupProperty ], disabled:itemIsDisabled( item )}"' +
         'ng-click="syncItems( item, $event, $index );" ' +
