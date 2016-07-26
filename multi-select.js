@@ -39,8 +39,9 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
 
         scope: {
             // models
-            inputModel: '=',
+            // inputModel: '=',
             outputModel: '=',
+            selectedData: '=',
             filterUrl: '@',
 
             // settings based on attribute
@@ -81,6 +82,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
             $scope.tabIndex = 0;
             $scope.lang = {};
             $scope.connectService = false;
+            $scope.inputModel = [];
             $scope.helperStatus = {
                 all: true,
                 none: true,
@@ -106,13 +108,44 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                 $scope.updateFilter();
                 $scope.select('clear', e);
             }
-            $scope.busy = true;
+            $scope.busy = false;
             $scope.init = function() {
+                if (
+                    $scope.filterUrl != null && $scope.filterUrl !== '' && ($scope.inputModel == null || $scope.inputModel.length === 0) && $scope.busy === false
+                ) {
+                    // if(typeof $scope.selectedData == 'undefined'){
+                    //     $scope.selectedData = {};
+                    // }
+                    $scope.bean = {};
+                    $scope.bean.fromIndex = 0;
+                    $scope.bean.flag = 'init';
+                    $scope.bean.selecteddata = $scope.selectedData;
+                    $scope.busy = true;
+                    $http.post($scope.filterUrl, $scope.bean)
+                        .success(function(data, status, headers, config) {
+                            if (data.status === 'success') {
+                                $scope.message = data.message;
+                                if (!data.data.curRecord || data.data.curRecord.length === 0) {
+                                    return false;
+                                }
+                                $scope.inputModel = data.data.curRecord;
+                                // $scope.inputModel.reverse();
+                                $scope.prepareIndex();
+                            } else {
+                                console.error(data.message);
+                                $scope.message = data.message;
+                            }
+                            $scope.busy = false;
+                        })
+                        .error(function(data, status, headers, config) {
+                            $scope.busy = false;
+                            console.error(data);
+                        });
+                }
                 $scope.filterInputModel = $scope.inputModel;
             }
 
-            $scope.searchBean = {};
-            
+            // $scope.init();
 
             // A little hack so that AngularJS ng-repeat can loop using start and end index like a normal loop
             // http://stackoverflow.com/questions/16824853/way-to-ng-repeat-defined-number-of-times-instead-of-repeating-over-array
@@ -139,82 +172,44 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
 
                 for (i = $scope.inputModel.length - 1; i >= 0; i--) {
                     $scope.filteredModel.push($scope.inputModel[i]);
-
-                    // // if it's group end, we push it to filteredModel[];
-                    // if (typeof $scope.inputModel[i][attrs.groupProperty] !== 'undefined' && $scope.inputModel[i][attrs.groupProperty] === false) {
-                    //     $scope.filteredModel.push($scope.inputModel[i]);
-                    // }
-
-                    // // if it's data 
-                    // var gotData = false;
-                    // if (typeof $scope.inputModel[i][attrs.groupProperty] === 'undefined') {
-
-                    //     // If we set the search-key attribute, we use this loop. 
-                    //     if (typeof attrs.searchProperty !== 'undefined' && attrs.searchProperty !== '') {
-
-                    //         for (var key in $scope.inputModel[i]) {
-                    //             if (
-                    //                 typeof $scope.inputModel[i][key] !== 'boolean' && String($scope.inputModel[i][key]).toUpperCase().indexOf($scope.inputLabel.labelFilter.toUpperCase()) >= 0 && attrs.searchProperty.indexOf(key) > -1
-                    //             ) {
-                    //                 gotData = true;
-                    //                 break;
-                    //             }
-                    //         }
-                    //     }
-                    //     // if there's no search-key attribute, we use this one. Much better on performance.
-                    //     else {
-                    //         for (var key in $scope.inputModel[i]) {
-                    //             if (
-                    //                 typeof $scope.inputModel[i][key] !== 'boolean' && String($scope.inputModel[i][key]).toUpperCase().indexOf($scope.inputLabel.labelFilter.toUpperCase()) >= 0
-                    //             ) {
-                    //                 gotData = true;
-                    //                 break;
-                    //             }
-                    //         }
-                    //     }
-
-                    //     if (gotData === true) {
-                    //         // push
-                    //         $scope.filteredModel.push($scope.inputModel[i]);
-                    //     }
-                    // }
-
-                    // // if it's group start
-                    // if (typeof $scope.inputModel[i][attrs.groupProperty] !== 'undefined' && $scope.inputModel[i][attrs.groupProperty] === true) {
-
-                    //     if (typeof $scope.filteredModel[$scope.filteredModel.length - 1][attrs.groupProperty] !== 'undefined' && $scope.filteredModel[$scope.filteredModel.length - 1][attrs.groupProperty] === false) {
-                    //         $scope.filteredModel.pop();
-                    //     } else {
-                    //         $scope.filteredModel.push($scope.inputModel[i]);
-                    //     }
-                    // }
                 }
 
                 $scope.filteredModel.reverse();
                 // modified by sun
                 // if($scope.filteredModel == null || $scope.filteredModel === "" || $scope.filteredModel.length === 0){
                 if ($scope.filterUrl != null && $scope.filterUrl !== "" && $scope.inputLabel.labelFilter != null && $scope.inputLabel.labelFilter !== "") {
-                    $scope.searchBean = {filtername: $scope.inputLabel.labelFilter, flag: 'filter'};
-                    $http.post($scope.filterUrl, $scope.searchBean)
+                    $scope.bean = {};
+                    $scope.bean['filterName'] = $scope.inputLabel.labelFilter;
+                    $scope.bean['flag'] = 'filter';
+                    $scope.bean['fromIndex'] = 0;
+                    $http.post($scope.filterUrl, $scope.bean)
                         .success(function(data, status, headers, config) {
                             if (data.status === 'success') {
                                 $scope.message = data.message;
-                                if (!data.data.curRecord || data.data.curRecord.length === 0) {
+                                $scope.filteredModel = data.data.filterRecord;
+                                // $scope.filterInputModel = data.data.filterRecord;
+                                if (!data.data.filterRecord || data.data.filterRecord.length === 0) {
                                     return false;
                                 }
-                                $scope.filteredModel = data.data.curRecord;
-                                angular.forEach(data.data.curRecord, function(value, key){
-                                    for(var i=0; i<$scope.filterInputModel.length; i++){
-                                        if($scope.filterInputModel[i].name === value['name']){
+                                angular.forEach(data.data.filterRecord, function(value, key) {
+                                    for (var i = 0; i < $scope.filterInputModel.length; i++) {
+                                        if ($scope.filterInputModel[i].id === value.id && $scope.filterInputModel[i].name === value.name) {
                                             return;
                                         }
                                     }
                                     $scope.filterInputModel.push({
+                                        id: value.id,
                                         name: value.name,
                                         ticked: value.ticked
                                     });
                                 });
+                                // angular.forEach($scope.filterInputModel, function(value, key){
+                                //     console.log(value.name);
+                                // });
                                 $scope.filterInputModel.reverse();
+                                // angular.forEach($scope.filterInputModel, function(value, key){
+                                //     console.log(value.name);
+                                // });
                                 $scope.prepareIndex();
                             } else {
                                 console.error(data.message);
@@ -258,41 +253,45 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
             };
 
             $scope.hasMore = true;
-            $scope.loadMore = function(){
+            $scope.loadMore = function() {
                 // console.log('loadMore');
-                if($scope.filteredModel.length >= 20){
-                    $scope.searchBean = {fromPage: $scope.filteredModel.length, flag: 'scoller'};
-                    $http.post($scope.filterUrl, $scope.searchBean)
-                    .success(function(data, status, headers, config) {
-                        if (data.status === 'success') {
-                            $scope.message = data.message;
-                            if (!data.data.curRecord || data.data.curRecord.length === 0) {
-                                $scope.hasMore = false;
-                                return false;
-                            }
-                            if(data.data.curRecord.length < 20){
-                                $scope.hasMore = false;
-                            }
-                            angular.forEach(data.data.curRecord, function(value, key){
-                                $scope.filteredModel.push({
-                                    name: value.name,
-                                    ticked: value.ticked
+                if ($scope.filteredModel.length >= 20) {
+                    $scope.bean = {};
+                    $scope.bean.fromIndex = $scope.filteredModel.length;
+                    $scope.bean.flag = 'scoller';
+                    $http.post($scope.filterUrl, $scope.bean)
+                        .success(function(data, status, headers, config) {
+                            if (data.status === 'success') {
+                                $scope.message = data.message;
+                                if (!data.data.curRecord || data.data.curRecord.length === 0) {
+                                    $scope.hasMore = false;
+                                    return false;
+                                }
+                                if (data.data.curRecord.length < 20) {
+                                    $scope.hasMore = false;
+                                }
+                                angular.forEach(data.data.curRecord, function(value, key) {
+                                    $scope.filteredModel.push({
+                                        id: value.id,
+                                        name: value.name,
+                                        ticked: value.ticked
+                                    });
+                                    $scope.filterInputModel.push({
+                                        id: value.id,
+                                        name: value.name,
+                                        ticked: value.ticked
+                                    });
                                 });
-                                $scope.filterInputModel.push({
-                                    name: value.name,
-                                    ticked: value.ticked
-                                });
-                            });
-                            // $scope.filteredModel.reverse();
-                            $scope.prepareIndex();
-                        } else {
-                            console.error(data.message);
-                            $scope.message = data.message;
-                        }
-                    })
-                    .error(function(data, status, headers, config) {
-                        console.error(data);
-                    });
+                                // $scope.filteredModel.reverse();
+                                $scope.prepareIndex();
+                            } else {
+                                console.error(data.message);
+                                $scope.message = data.message;
+                            }
+                        })
+                        .error(function(data, status, headers, config) {
+                            console.error(data);
+                        });
                 }
             };
 
@@ -498,8 +497,11 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                     }
 
                     // we refresh input model as well
-                    var inputModelIndex = $scope.filteredModel[index][$scope.indexProperty];
-                    $scope.inputModel[inputModelIndex][$scope.tickProperty] = $scope.filteredModel[index][$scope.tickProperty];
+                    angular.forEach($scope.inputModel, function(value, key) {
+                        if (value['name'] === item.name) {
+                            value[$scope.tickProperty] = $scope.filteredModel[index][$scope.tickProperty];
+                        }
+                    });
                 }
 
                 // we execute the callback function here
@@ -533,6 +535,34 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                 }
             }
 
+            $scope.removeSelected = function(itemId, e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if ($scope.outputModel.length === 0 || $scope.outputModel == null) {
+                    return;
+                }
+                if (typeof itemId === 'undefined' || itemId === '') {
+                    return;
+                }
+
+                for (var i = 0; i < $scope.filterInputModel.length; i++) {
+                    if ($scope.filterInputModel[i]['id'] === itemId && $scope.filterInputModel[i][$scope.tickProperty] === true) {
+                        $scope.filterInputModel[i][$scope.tickProperty] = false;
+                        break;
+                    }
+                }
+                for(var j = 0; j < $scope.filteredModel.length; j++){
+                    if ($scope.filteredModel[j]['id'] === itemId && $scope.filteredModel[j][$scope.tickProperty] === true) {
+                        $scope.filteredModel[j][$scope.tickProperty] = false;
+                        break;
+                    }
+                }
+                $scope.refreshOutputModel();
+                if ($scope.outputModel.length === 0) {
+                    $scope.refreshButton();
+                }
+            }
+
             // update $scope.outputModel
             $scope.refreshOutputModel = function() {
 
@@ -541,7 +571,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                     outputProps = [],
                     tempObj = {};
 
-                if($scope.filterInputModel == null || $scope.filterInputModel.length === 0){
+                if ($scope.filterInputModel == null || $scope.filterInputModel.length === 0) {
                     $scope.filterInputModel = $scope.inputModel;
                 }
                 // v4.0.0
@@ -579,8 +609,6 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
             // refresh button label
             $scope.refreshButton = function() {
                 $scope.varButtonLabel = "";
-                // $scope.varButtonLabel = oldLabel.replace(/<span class='caret'></span>/g, "");
-                // console.log($scope.varButtonLabel);
                 var ctr = 0;
 
                 // refresh button label...
@@ -1139,6 +1167,11 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
         // clear button
         '<button type="button" class="clearButton" ng-click="clearClicked( $event )" >×</button> ' +
         '</div> ' +
+        '<div class="line" style="position:relative">' +
+        '<span ng-repeat="item in outputModel">' +
+        '<button data-toggle="tooltip" data-placement="bottom" title="移除" ng-click="removeSelected(item.id, $event)" class="helperButton" ng-bind="\'x \'+item.name"></button>' +
+        '</span>' +
+        '</div>' +
         '</div> ' +
         // selection items
         '<div id="checkBoxContainer" class="checkBoxContainer" scroll-bottom="loadMore()">' +
@@ -1156,7 +1189,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
         '<input class="checkbox focusable" type="checkbox" ' +
         'ng-disabled="itemIsDisabled( item )" ' +
         'ng-checked="item[ tickProperty ]" ' +
-        'ng-click="syncItems( item, $event, $index )" />' +
+        'ng-click="syncItems( item, $event, $index )" value="{{item.id}}" />' +
         // item label using ng-bind-hteml
         '<span ' +
         'ng-class="{disabled:itemIsDisabled( item )}" ' +
@@ -1167,7 +1200,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
         // the tick/check mark
         '<span class="tickMark" ng-if="item[ groupProperty ] !== true && item[ tickProperty ] === true" ng-bind-html="icon.tickMark"></span>' +
         '</div>' +
-        '<div class="multiSelectItem" ng-if="filteredModel.length >= 20 && hasMore">Load More……</div>'+
+        '<div class="multiSelectItem" ng-if="filteredModel.length >= 20 && hasMore">Load More……</div>' +
         '</div>' +
         '</div>' +
         '</span>';

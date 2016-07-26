@@ -15,7 +15,8 @@
 /* ! create a "row" */
 .multiSelect .line {
     padding:  2px 0px 4px 0px;
-    max-height: 30px;   
+    /*max-height: 30px;   */
+    min-width: 278px;
     overflow: hidden;
     box-sizing: content-box;
 }
