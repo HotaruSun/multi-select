@@ -125,10 +125,10 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                         .success(function(data, status, headers, config) {
                             if (data.status === 'success') {
                                 $scope.message = data.message;
-                                if (!data.data.curRecord || data.data.curRecord.length === 0) {
+                                if (!data.data.filterRecord || data.data.filterRecord.length === 0) {
                                     return false;
                                 }
-                                $scope.inputModel = data.data.curRecord;
+                                $scope.inputModel = data.data.filterRecord;
                                 // $scope.inputModel.reverse();
                                 $scope.prepareIndex();
                             } else {
