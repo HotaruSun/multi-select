@@ -1,30 +1,30 @@
 {
-  "name": "isteven-angular-multiselect",
-  "version": "v1.1.2",
-  "description": "A multi select dropdown directive for AngularJS",
-  "main": [
-    "isteven-multi-select.js",
-    "isteven-multi-select.css"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/isteven/angular-multi-select.git"
-  },
-  "keywords": [
-    "angular"
-  ],
-  "author": "Ignatius Steven <isteven.github@gmail.com> (https://github.com/isteven)",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/isteven/angular-multi-select/issues"
-  },
-  "homepage": "https://github.com/isteven/angular-multi-select",
-  "devDependencies": {
-    "grunt": "^1.0.1",
-    "grunt-contrib-uglify": "^1.0.1",
-    "grunt-contrib-cssmin": "^1.0.1",
-    "load-grunt-tasks": "^3.5.0",
-    "grunt-contrib-clean": "^1.0.0",
-    "grunt-ng-annotate": "^2.0.2"
-  }
+    "name": "isteven-angular-multiselect",
+    "version": "v1.1.2",
+    "description": "A multi select dropdown directive for AngularJS",
+    "main": [
+        "isteven-multi-select.js",
+        "isteven-multi-select.css"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/isteven/angular-multi-select.git"
+    },
+    "keywords": [
+        "angular"
+    ],
+    "author": "Ignatius Steven <isteven.github@gmail.com> (https://github.com/isteven)",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/isteven/angular-multi-select/issues"
+    },
+    "homepage": "https://github.com/isteven/angular-multi-select",
+    "devDependencies": {
+        "grunt": "^1.0.1",
+        "grunt-contrib-uglify": "^1.0.1",
+        "grunt-contrib-cssmin": "^1.0.1",
+        "load-grunt-tasks": "^3.5.0",
+        "grunt-contrib-clean": "^1.0.0",
+        "grunt-ng-annotate": "^2.0.2"
+    }
 }
