@@ -105,7 +105,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
             // clear button clicked
             $scope.clearClicked = function(e) {
                 $scope.inputLabel.labelFilter = '';
-                $scope.updateFilter();
+                // $scope.updateFilter();
                 $scope.select('clear', e);
             }
             $scope.busy = false;
@@ -263,14 +263,14 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                         .success(function(data, status, headers, config) {
                             if (data.status === 'success') {
                                 $scope.message = data.message;
-                                if (!data.data.curRecord || data.data.curRecord.length === 0) {
+                                if (!data.data.filterRecord || data.data.filterRecord.length === 0) {
                                     $scope.hasMore = false;
                                     return false;
                                 }
-                                if (data.data.curRecord.length < 20) {
+                                if (data.data.filterRecord.length < 20) {
                                     $scope.hasMore = false;
                                 }
-                                angular.forEach(data.data.curRecord, function(value, key) {
+                                angular.forEach(data.data.filterRecord, function(value, key) {
                                     $scope.filteredModel.push({
                                         id: value.id,
                                         name: value.name,
