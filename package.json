@@ -20,11 +20,21 @@
     },
     "homepage": "https://github.com/isteven/angular-multi-select",
     "devDependencies": {
+        "chai": "^2.2.0",
         "grunt": "^1.0.1",
-        "grunt-contrib-uglify": "^1.0.1",
-        "grunt-contrib-cssmin": "^1.0.1",
-        "load-grunt-tasks": "^3.5.0",
         "grunt-contrib-clean": "^1.0.0",
-        "grunt-ng-annotate": "^2.0.2"
-    }
+        "grunt-contrib-cssmin": "^1.0.1",
+        "grunt-contrib-uglify": "^1.0.1",
+        "grunt-ng-annotate": "^2.0.2",
+        "jasmine-core": "^2.5.2",
+        "karma": "^0.13.22",
+        "karma-chai": "^0.1.0",
+        "karma-chrome-launcher": "^1.0.1",
+        "karma-coverage": "^1.1.1",
+        "karma-jasmine": "^1.0.2",
+        "karma-junit-reporter": "^1.0.0",
+        "karma-mocha": "^1.0.1",
+        "load-grunt-tasks": "^3.5.0",
+        "mocha": "^2.5.3"
+      }
 }

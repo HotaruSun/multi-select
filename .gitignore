@@ -1,4 +1,6 @@
 node_modules/
+bower_components/
+coverage/
 .sass-cache
 npm-debug.log
 *.annotated.js
