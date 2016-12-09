@@ -1225,6 +1225,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
         },
         restrict: 'A',
         link: function(scope, element, attr) {
+            var checkBoxContainer = document.getElementsByName('checkBoxContainer');
             var elem = angular.element(checkBoxContainer);
             elem.bind('scroll', function() {
                 elem = elem[0] || elem;
