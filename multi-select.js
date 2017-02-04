@@ -43,6 +43,9 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
             outputModel: '=',
             selectedData: '=',
             filterUrl: '@',
+            filterType: '@',
+            filterData: '=',
+            selectorId: '@',
 
             // settings based on attribute
             isDisabled: '=',
@@ -110,40 +113,65 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
             }
             $scope.busy = false;
             $scope.init = function() {
-                if (
-                    $scope.filterUrl != null && $scope.filterUrl !== '' && ($scope.inputModel == null || $scope.inputModel.length === 0) && $scope.busy === false
-                ) {
-                    // if(typeof $scope.selectedData == 'undefined'){
-                    //     $scope.selectedData = {};
-                    // }
+                if (typeof $scope.bean === 'undefined') {
                     $scope.bean = {};
-                    $scope.bean.fromIndex = 0;
-                    $scope.bean.flag = 'init';
-                    $scope.bean.selecteddata = $scope.selectedData;
-                    $scope.busy = true;
-                    $http.post($scope.filterUrl, $scope.bean)
-                        .success(function(data, status, headers, config) {
-                            if (data.status === 'success') {
-                                $scope.message = data.message;
-                                if (!data.data.filterRecord || data.data.filterRecord.length === 0) {
-                                    return false;
-                                }
-                                $scope.inputModel = data.data.filterRecord;
-                                // $scope.inputModel.reverse();
-                                $scope.prepareIndex();
-                            } else {
-                                console.error(data.message);
-                                $scope.message = data.message;
-                            }
-                            $scope.busy = false;
-                        })
-                        .error(function(data, status, headers, config) {
-                            $scope.busy = false;
-                            console.error(data);
-                        });
+                }
+                if (!isEmpty($scope.filterUrl) && !$scope.busy) {
+                    if ((!$scope.inputModel || $scope.inputModel.length <= 0) || ($scope.filterData && $scope.filterData.length > 0 && $scope.filterData !== $scope.bean.filterdata)) {
+	                    // if(typeof $scope.selectedData == 'undefined'){
+	                    //     $scope.selectedData = {};
+	                    // }
+	                    $scope.bean.fromIndex = 0;
+	                    $scope.bean.flag = 'init';
+
+	                    angular.forEach($scope.filteredModel, function(value, key) { // clean up the selected data
+	                        if (typeof value !== 'undefined' && value[attrs.disableProperty] !== true) {
+	                            if (typeof value[attrs.groupProperty] === 'undefined') {
+	                                value[$scope.tickProperty] = false;
+	                            }
+	                        }
+	                    });
+	                    $scope.refreshOutputModel();
+	                    if ($scope.outputModel.length === 0) {
+	                        $scope.refreshButton();
+	                    }
+
+	                    $scope.refreshOutputModel();
+	                    $scope.refreshButton();
+	                    $scope.onSelectNone();
+
+	                    $scope.bean.selecteddata = $scope.selectedData;
+	                    $scope.bean.filtertype = $scope.filterType;
+	                    $scope.bean.filterdata = $scope.filterData;
+	                    $scope.busy = true;
+	                    $http.post($scope.filterUrl, $scope.bean)
+	                        .success(function(data, status, headers, config) {
+	                            if (data.status === 'success') {
+	                                $scope.message = data.message;
+	                                if (!data.data.filterRecord || data.data.filterRecord.length === 0) {
+	                                    return false;
+	                                }
+	                                $scope.inputModel = data.data.filterRecord;
+	                                // $scope.inputModel.reverse();
+	                                $scope.prepareIndex();
+	                            } else {
+	                                console.error(data.message);
+	                                $scope.message = data.message;
+	                            }
+	                            $scope.busy = false;
+	                        })
+	                        .error(function(data, status, headers, config) {
+	                            $scope.busy = false;
+	                            console.error(data);
+	                        });
+                    } else {
+                    	$scope.busy = false;
+                    }
+                } else {
+                    $scope.busy = false;
                 }
                 $scope.filterInputModel = $scope.inputModel;
-            }
+            };
 
             // $scope.init();
 
@@ -151,7 +179,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
             // http://stackoverflow.com/questions/16824853/way-to-ng-repeat-defined-number-of-times-instead-of-repeating-over-array
             $scope.numberToArray = function(num) {
                 return new Array(num);
-            }
+            };
 
             // Call this function when user type on the filter field
             $scope.searchChanged = function(e) {
@@ -551,7 +579,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                         break;
                     }
                 }
-                for(var j = 0; j < $scope.filteredModel.length; j++){
+                for (var j = 0; j < $scope.filteredModel.length; j++) {
                     if ($scope.filteredModel[j]['id'] === itemId && $scope.filteredModel[j][$scope.tickProperty] === true) {
                         $scope.filteredModel[j][$scope.tickProperty] = false;
                         break;
@@ -1098,7 +1126,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
 
             // add by xjma
             $scope.$watch("selectedData", function(newVal) {
-               if (newVal) {
+                if (newVal) {
                     $scope.backUp = angular.copy($scope.inputModel);
                     $scope.updateFilter();
                     $scope.prepareGrouping();
@@ -1187,7 +1215,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
         '</div>' +
         '</div> ' +
         // selection items
-        '<div id="checkBoxContainer" class="checkBoxContainer" scroll-bottom="loadMore()">' +
+        '<div id="{{selectorId}}" class="checkBoxContainer" scroll-bottom="loadMore()" selector-id="selectorId">' +
         '<div name="{{item.name}}" ' +
         'ng-repeat="item in filteredModel | filter:removeGroupEndMarker" class="multiSelectItem"' +
         'ng-class="{selected: item[ tickProperty ], horizontal: orientationH, vertical: orientationV, multiSelectGroup:item[ groupProperty ], disabled:itemIsDisabled( item )}"' +
@@ -1221,25 +1249,27 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
 }]).directive('scrollBottom', function($timeout) {
     return {
         scope: {
-            scrollBottom: '&'
+            scrollBottom: '&',
+            selectorId: '='
         },
         restrict: 'A',
         link: function(scope, element, attr) {
-            var checkBoxContainer = document.getElementsByName('checkBoxContainer');
-            var elem = angular.element(checkBoxContainer);
-            elem.bind('scroll', function() {
-                elem = elem[0] || elem;
-                if (elem.offsetHeight + elem.scrollTop === elem.scrollHeight) {
-                    // console.log('scroll');
-                    $timeout(function() {
-                        scope.scrollBottom();
-                        scope.$apply();
-                    }, 800);
-                }
-            });
-            element.on('$destroy', function() {
-                element.unbind('scroll');
-            });
+            $timeout(function() {
+                // var elem = angular.element(checkBoxContainer);
+                var elem = angular.element(document.getElementById(scope.selectorId));
+                elem.bind('scroll', function() {
+                    elem = elem[0] || elem;
+                    if (elem.offsetHeight + elem.scrollTop === elem.scrollHeight) {
+                        $timeout(function() {
+                            scope.scrollBottom();
+                            scope.$apply();
+                        }, 800);
+                    }
+                });
+                element.on('$destroy', function() {
+                    element.unbind('scroll');
+                });
+            }, 500);
         }
     };
 });
