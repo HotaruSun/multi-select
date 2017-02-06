@@ -11,6 +11,35 @@ module.exports = function (grunt) {
 
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
+        jshint: {
+            options: {
+                //eqeqeq: true, // 如果是true，则要求在所有的比较时使用===和!==
+                curly: true, // 如果是true，则要求在if/while的模块时使用TAB结构
+                eqnull: true, // 如果是true，则允许使用== null
+                noempty: true, // 如果是true，则不允许使用空函数
+                undef: true, // 如果是ture，则所有的局部变量必须先声明之后才能使用
+                //strict: true, // 如果是true，则需要使用strict的用法
+                white: true, // 如果是true，则需要严格使用空格用法
+                sub: true, // 如果是true，则允许使用各种写法获取属性(一般使用.来获取一个对象的属性值)
+                //browser: true,
+                "jquery": true,
+                globalstrict: false,
+                esnext: true
+            },
+            client: {
+                options: {
+                    globals: {
+                        angular: false,
+                        isEmpty: false,
+                        console: false,
+                        document: false
+                    }
+                },
+                files: {
+                    src: ['multi-select.js']
+                }
+            }
+        },
         ngAnnotate: {
             options: {
                 singleQuotes: true,

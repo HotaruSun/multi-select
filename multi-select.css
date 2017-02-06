@@ -135,6 +135,32 @@
     margin-right: 4px;    
 }
 
+/* search buttons (select all, none, reset); */
+.multiSelect .searchButton {
+    position: absolute;
+    display: inline;
+    text-align: center;
+    cursor: pointer;
+    border: 1px solid #5bc0de;
+    height: 22px;
+    width: 50px;
+    font-size: 13px;
+    border-radius: 2px;
+    color: #fff;    
+    background-color: #5bc0de;
+    line-height: 1.4;
+    right : 2px;
+    top: 4px;
+}
+
+.multiSelect .searchButton.reset{
+    float: right;
+}
+
+.multiSelect .searchButton:not( .reset ) {
+    margin-right: 0px;    
+}
+
 /* clear button */
 .multiSelect .clearButton {
     position: absolute;
@@ -149,7 +175,7 @@
     color: #666;    
     background-color: #f1f1f1;
     line-height: 1.4;
-    right : 2px;
+    right : 55px;
     top: 4px;
 }
 
@@ -159,7 +185,9 @@
     border: 1px solid #ccc;
     height: 26px;
     font-size: 14px;
-    width:100%;    
+    width:100%;
+    border-right-width:54px;
+    border-right-color: #5bc0de;
     padding-left:7px;
     -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
     -moz-box-sizing: border-box;    /* Firefox, other Gecko */
@@ -177,18 +205,28 @@
     color: #999;    
     background-color: #f4f4f4;    
 }
-.multiSelect .helperButton:disabled {
+.multiSelect .searchButton:hover {
+    border: 1px solid #ccc;
+    color: #ddd;    
+    background-color: #269abc;    
+}
+.multiSelect .helperButton:disabled,
+.multiSelect .searchButton:disabled {
     color: #ccc;    
     border: 1px solid #ddd;
 }
 
 .multiSelect .clearButton:focus,
 .multiSelect .helperButton:focus,
+.multiSelect .searchButton:focus,
 .multiSelect .inputFilter:focus {
-    border: 1px solid #66AFE9 !important;
+    border: 1px solid #5bc0de !important;
     outline: 0;
     -webkit-box-shadow: inset 0 0 1px rgba(0,0,0,.065), 0 0 5px rgba(102, 175, 233, .6) !important;
             box-shadow: inset 0 0 1px rgba(0,0,0,.065), 0 0 5px rgba(102, 175, 233, .6) !important;
+}
+.multiSelect .inputFilter:focus {
+    border-right-width:54px !important;
 }
 
 /* container of multi select items */
