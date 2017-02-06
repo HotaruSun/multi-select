@@ -520,11 +520,11 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                     if (typeof attrs.selectionMode !== 'undefined' && attrs.selectionMode.toUpperCase() === 'SINGLE') {
 
                         // first, set everything to false
-                        for (i = 0; i < $scope.filteredModel.length; i++) {
-                            $scope.filteredModel[i][$scope.tickProperty] = false;
+                        for (var a = 0; a < $scope.filteredModel.length; a++) {
+                            $scope.filteredModel[a][$scope.tickProperty] = false;
                         }
-                        for (i = 0; i < $scope.inputModel.length; i++) {
-                            $scope.inputModel[i][$scope.tickProperty] = false;
+                        for (var b = 0; b < $scope.inputModel.length; b++) {
+                            $scope.inputModel[b][$scope.tickProperty] = false;
                         }
 
                         // then set the clicked item to true
@@ -712,9 +712,11 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                 var label = '';
 
                 angular.forEach(temp, function(value, key) {
-                    item[value] && (label += '&nbsp;' + value.split('.').reduce(function(prev, current) {
-                        return prev[current];
-                    }, item));
+                    if (item[value]) {
+                        label += '&nbsp;' + value.split('.').reduce(function(prev, current) {
+                            return prev[current];
+                        }, item);
+                    }
                 });
 
                 if (type.toUpperCase() === 'BUTTONLABEL') {

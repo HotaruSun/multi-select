@@ -38,6 +38,16 @@ module.exports = function (grunt) {
                 files: {
                     src: ['multi-select.js']
                 }
+            },
+            test: {
+                options: {
+                    globals: {
+                        angular: false,
+                    }
+                },
+                files: {
+                    src: ['test/testSpec/*.js']
+                }
             }
         },
         ngAnnotate: {
