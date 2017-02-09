@@ -125,7 +125,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                 if (typeof $scope.bean === 'undefined') {
                     $scope.bean = {};
                 }
-                if (!isEmpty($scope.filterUrl) && !$scope.busy) {
+                if ($scope.filterUrl !=="null" && $scope.filterUrl !==""  && !$scope.busy) {
                     if ((!$scope.inputModel || $scope.inputModel.length <= 0) || ($scope.filterData && $scope.filterData.length > 0 && $scope.filterData !== $scope.bean.filterdata)) {
                         // if(typeof $scope.selectedData == 'undefined'){
                         //     $scope.selectedData = {};
