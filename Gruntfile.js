@@ -1,4 +1,4 @@
-//'use strict';
+﻿//'use strict';
 
 module.exports = function (grunt) {
     // show elapsed time at the end
@@ -43,6 +43,14 @@ module.exports = function (grunt) {
                 options: {
                     globals: {
                         angular: false,
+			describe: false,
+			beforeEach: false,
+			module: false,
+			inject: false,
+			afterEach: false,
+			it: false,
+			xit: false,
+			expect: false
                     }
                 },
                 files: {
