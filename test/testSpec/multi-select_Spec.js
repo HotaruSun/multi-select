@@ -1,4 +1,3 @@
-'use strict';
 describe('test', function() {
     var $scope, $_compile, $httpBackend, el, template, test;
     let getTest = function($injector, $compile, $rootScope) {
@@ -24,9 +23,9 @@ describe('test', function() {
         $httpBackend.verifyNoOutstandingExpectation();
         $httpBackend.verifyNoOutstandingRequest();
     });
-
+    //测试多选模式下组件的元素
     it('it should add this element', function() {
-        el = angular.element('<div isteven-multi-select  output-model="selectedTests">');
+        el = angular.element('<div isteven-multi-select  output-model="selectedTests" selector-id="selectedTest">');
         template = $_compile(el)($scope);
         $scope.$digest();
         expect(template.attr('class')).to.equal('ng-scope ng-isolate-scope');
@@ -34,7 +33,7 @@ describe('test', function() {
         expect(template.find('span').find('span').attr('class')).to.equal('caret');
         expect(template.find('span').attr('class')).to.equal('multiSelect inlineBlock');
 
-        expect(template.find('button').length).to.equal(5);
+        expect(template.find('button').length).to.equal(6);
         expect(template.find('button').attr('class')).to.equal('form-control pull-left ng-binding');
         expect(template.find('button').attr('id')).to.equal('');
         expect(template.find('button').attr('type')).to.equal('button');
@@ -69,7 +68,7 @@ describe('test', function() {
 
         expect(template.find('div').children('div').find('div').next().find('button').attr('class')).to.equal('clearButton');
         expect(template.find('div').children('div').find('div').next().find('button').attr('type')).to.equal('button');
-        expect(template.find('div').children('div').find('div').next().find('button').attr('ng-click')).to.equal('clearClicked( $event )');
+        expect(template.find('div').children('div').find('div').next().find('button').attr('ng-click')).to.equal('clearClicked($event)');
 
         expect(template.find('div').length).to.equal(6);
         expect(template.find('div').attr('class')).to.equal('checkboxLayer');
@@ -78,7 +77,7 @@ describe('test', function() {
         expect(template.find('div').children('div').attr('ng-if')).to.equal('helperStatus.filter || helperStatus.all || helperStatus.none || helperStatus.reset ');
 
         expect(template.find('div').children('div').next().attr('class')).to.equal('checkBoxContainer ng-isolate-scope');
-        expect(template.find('div').children('div').next().attr('id')).to.equal('checkBoxContainer');
+        expect(template.find('div').children('div').next().attr('id')).to.equal('selectedTest');
         expect(template.find('div').children('div').next().attr('scroll-bottom')).to.equal('loadMore()');
 
         expect(template.find('div').children('div').find('div').attr('class')).to.equal('line ng-scope');
@@ -97,10 +96,10 @@ describe('test', function() {
         expect(template.find('input').attr('type')).to.equal('text');
         expect(template.find('input').attr('ng-click')).to.equal("select( \'filter\', $event )");
         expect(template.find('input').attr('ng-model')).to.equal('inputLabel.labelFilter');
-        expect(template.find('input').attr('ng-change')).to.equal('searchChanged()');
+        expect(template.find('input').attr('ng-change')).to.equal('');
         expect(template.find('input').attr('class')).to.equal('inputFilter ng-pristine ng-untouched ng-valid ng-empty');
     });
-
+    //测试多选模式下组件的元素
     it('it should add this element111', function() {
         el = angular.element('<div isteven-multi-select selection-mode="single" output-model="selectedTests">');
         template = $_compile(el)($scope);
@@ -110,7 +109,7 @@ describe('test', function() {
         expect(template.find('span').find('span').attr('class')).to.equal('caret');
         expect(template.find('span').attr('class')).to.equal('multiSelect inlineBlock');
 
-        expect(template.find('button').length).to.equal(3);
+        expect(template.find('button').length).to.equal(4);
         expect(template.find('button').attr('class')).to.equal('form-control pull-left ng-binding');
         expect(template.find('button').attr('id')).to.equal('');
         expect(template.find('button').attr('type')).to.equal('button');
@@ -128,7 +127,7 @@ describe('test', function() {
 
         expect(template.find('div').children('div').find('div').next().find('button').attr('class')).to.equal('clearButton');
         expect(template.find('div').children('div').find('div').next().find('button').attr('type')).to.equal('button');
-        expect(template.find('div').children('div').find('div').next().find('button').attr('ng-click')).to.equal('clearClicked( $event )');
+        expect(template.find('div').children('div').find('div').next().find('button').attr('ng-click')).to.equal('clearClicked($event)');
 
         expect(template.find('div').length).to.equal(6);
         expect(template.find('div').attr('class')).to.equal('checkboxLayer');
@@ -137,7 +136,7 @@ describe('test', function() {
         expect(template.find('div').children('div').attr('ng-if')).to.equal('helperStatus.filter || helperStatus.all || helperStatus.none || helperStatus.reset ');
 
         expect(template.find('div').children('div').next().attr('class')).to.equal('checkBoxContainer ng-isolate-scope');
-        expect(template.find('div').children('div').next().attr('id')).to.equal('checkBoxContainer');
+        //expect(template.find('div').children('div').next().attr('id')).to.equal('checkBoxContainer');
         expect(template.find('div').children('div').next().attr('scroll-bottom')).to.equal('loadMore()');
 
         expect(template.find('div').children('div').find('div').attr('class')).to.equal('line ng-scope');
@@ -156,10 +155,10 @@ describe('test', function() {
         expect(template.find('input').attr('type')).to.equal('text');
         expect(template.find('input').attr('ng-click')).to.equal("select( \'filter\', $event )");
         expect(template.find('input').attr('ng-model')).to.equal('inputLabel.labelFilter');
-        expect(template.find('input').attr('ng-change')).to.equal('searchChanged()');
+        expect(template.find('input').attr('ng-change')).to.equal('');
         expect(template.find('input').attr('class')).to.equal('inputFilter ng-pristine ng-untouched ng-valid ng-empty');
     });
-
+    //测试单选模式下组件里面的点击展开元素以及查询功能
     it('test first button for single selection', function() {
         $httpBackend.when('POST', '/test/').respond({
             status: 'success',
@@ -182,7 +181,7 @@ describe('test', function() {
         $httpBackend.flush();
 
         let checkBoxContainerFirstDiv = template.find('div').children('div').next().children('div');
-        expect(template.find('div').children('div').next().children('div').length).to.equal(7);
+        expect(template.find('div').children('div').next().children('div').length).to.equal(8);
 
         for (var i = 0; i < 3; i++) {
             expect(checkBoxContainerFirstDiv.attr('name')).to.equal('' + (i + 1));
@@ -206,7 +205,7 @@ describe('test', function() {
             checkBoxContainerFirstDiv = checkBoxContainerFirstDiv.next();
         }
     });
-
+    // 测试多选模式下查询之后全选按钮
     it('test selectAll button', function() {
         $httpBackend.when('POST', '/test/').respond({
             status: 'success',
@@ -245,7 +244,7 @@ describe('test', function() {
             firstTestSpan = firstTestSpan.next();
         }
     });
-
+    //测试多选模式下的全不选按钮
     it('test selectNone button', function() {
         $httpBackend.when('POST', '/test/').respond({
             status: 'success',
@@ -278,12 +277,14 @@ describe('test', function() {
         expect(firstTestSpan.find('button').length).to.equal(0);
     });
     
+    //测试多选模式下的查询输入框的功能
     // currently we can not simulate the response result according to the search/filter condition, so we comment this 'it' for the time being, TODO, ...
-    xit('test inputFilter', function() {
+    it('test inputFilter', function() {
         $httpBackend.whenPOST('/test/').respond(function(method, url, data) {
-            var data = eval("(" + data + ")");
-            if (data.flag == 'init') {
-                var datas = {
+            var datas = {};
+            data = JSON.parse(data);
+            if (data.flag === 'init') {
+                datas = {
                     status: 'success',
                     message: false,
                     data: {
@@ -298,7 +299,7 @@ describe('test', function() {
                 return datas;
             } else if (data.flag === 'filter') {
                 if (data.filterName !== null) {
-                    var datas = {
+                    datas = {
                         status: 'success',
                         message: false,
                         data: {
@@ -310,7 +311,7 @@ describe('test', function() {
                     };
                     return datas;
                 } else {
-                   var  datas = {
+                    datas = {
                         status: 'success',
                         message: false,
                         data: {
@@ -335,6 +336,7 @@ describe('test', function() {
         let inputFilter = angular.element(el.find('input'));
 
         initButton.triggerHandler('click');
+        //expect(angular.element(template.find('div').children('div')[1]).children('input')).to.equal(1);
 
         inputFilter.attr('value', 1);
         inputFilter.triggerHandler('click');
@@ -342,11 +344,10 @@ describe('test', function() {
         $httpBackend.flush();
         expect(inputFilter.attr('value')).to.equal('1');
 
-        /*let checkBoxContainerFirstDiv = template.find('div').children('div').next().children('div');
+        let checkBoxContainerFirstDiv = template.find('div').children('div').next().children('div');
         let firstTestSpan = template.find('div').children('div').children('div').next().next().children('span');
 
         expect(firstTestSpan.find('button').length).to.equal(0);
-*/
     });
     
     // currently we can not simulate the response result according to the search/filter condition, so we comment this 'it' for the time being, TODO, ...
@@ -360,7 +361,7 @@ describe('test', function() {
             obj.name = 'name' + (i + 1);
             obj.ticked = 'false';
             filterRecord.push(obj);
-        };
+        }
         data.filterRecord = filterRecord;
         $httpBackend.when('POST', '/test/').respond({
             status: 'success',
@@ -381,8 +382,8 @@ describe('test', function() {
         let checkBoxContainerFirstDiv = template.find('div').children('div').next().children('div');
         //expect(template.find('div').children('div').next().children('div').length).to.equal(7);
 
-        for (var i = 0; i < 40; i++) {
-            expect(checkBoxContainerFirstDiv.attr('name')).to.equal('name' + (i + 1));
+        for (var j = 0; j < 40; j++) {
+            expect(checkBoxContainerFirstDiv.attr('name')).to.equal('name' + (j + 1));
             expect(checkBoxContainerFirstDiv.attr('ng-repeat')).to.equal('item in filteredModel | filter:removeGroupEndMarker');
             expect(checkBoxContainerFirstDiv.attr('class')).to.equal('multiSelectItem ng-scope selected vertical');
             expect(checkBoxContainerFirstDiv.attr('ng-class')).to.equal('{selected: item[ tickProperty ], horizontal: orientationH, vertical: orientationV, multiSelectGroup:item[ groupProperty ], disabled:itemIsDisabled( item )}');
@@ -395,7 +396,7 @@ describe('test', function() {
             expect(checkBoxContainerFirstDiv.children('div').find('input').attr('ng-disabled')).to.equal('itemIsDisabled( item )');
             expect(checkBoxContainerFirstDiv.children('div').find('input').attr('ng-checked')).to.equal('item[ tickProperty ]');
             expect(checkBoxContainerFirstDiv.children('div').find('input').attr('ng-click')).to.equal('syncItems( item, $event, $index )');
-            expect(checkBoxContainerFirstDiv.children('div').find('input').attr('value')).to.equal('id' + (i + 1));
+            expect(checkBoxContainerFirstDiv.children('div').find('input').attr('value')).to.equal('id' + (j + 1));
             expect(checkBoxContainerFirstDiv.children('div').find('span').attr('ng-class')).to.equal('{disabled:itemIsDisabled( item )}');
             expect(checkBoxContainerFirstDiv.children('div').find('span').attr('ng-bind-html')).to.equal("writeLabel( item, 'itemLabel' )");
             expect(checkBoxContainerFirstDiv.children('div').find('span').attr('class')).to.equal('ng-binding');
@@ -403,6 +404,7 @@ describe('test', function() {
         }
     });
 
+    // 测试多选模式下的重置按钮
     it('test reset button', function() {
         $httpBackend.when('POST', '/test/').respond({
             status: 'success',
@@ -436,6 +438,7 @@ describe('test', function() {
         expect(firstTestSpan.find('button').length).to.equal(0);
     });
 
+    //测试单选模式下的选中
     it('test first button for selections', function() {
         $httpBackend.when('POST', '/test/').respond({
             status: 'success',
@@ -467,6 +470,7 @@ describe('test', function() {
         expect(template.children('span').children().find('div').attr('class')).to.equal('buttonLabel  text-left');
         expect(angular.element(template.children('span').children().find('div')[0]).text()).to.equal(' 1');
     });
+    //测试多选模式下的选中
     it('test first button for selections', function() {
         $httpBackend.when('POST', '/test/').respond({
             status: 'success',
