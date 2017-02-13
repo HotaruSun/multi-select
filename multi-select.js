@@ -33,7 +33,7 @@
 
 // 'use strict';
 
-angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', ['$sce', '$timeout', '$templateCache', '$http', function($sce, $timeout, $templateCache, $http) {
+angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', ['$sce', '$timeout', '$templateCache', '$http', '$q', function($sce, $timeout, $templateCache, $http, $q) {
     return {
         restrict: 'AE',
 
@@ -102,7 +102,8 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                 selectedItems = [],
                 formElements = [],
                 vMinSearchLength = 0,
-                clickedItem = null;
+                clickedItem = null,
+                startTime;
 
             // v3.0.0
             // clear button clicked
@@ -125,7 +126,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                 if (typeof $scope.bean === 'undefined') {
                     $scope.bean = {};
                 }
-                if ($scope.filterUrl !=="null" && $scope.filterUrl !==""  && !$scope.busy) {
+                if (!isEmpty($scope.filterUrl) && !$scope.busy) {
                     if ((!$scope.inputModel || $scope.inputModel.length <= 0) || ($scope.filterData && $scope.filterData.length > 0 && $scope.filterData !== $scope.bean.filterdata)) {
                         // if(typeof $scope.selectedData == 'undefined'){
                         //     $scope.selectedData = {};
@@ -196,8 +197,14 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                 if ($scope.inputLabel.labelFilter.length < vMinSearchLength && $scope.inputLabel.labelFilter.length > 0) {
                     return false;
                 }
-                $timeout($scope.updateFilter(), 800);
-                // $scope.updateFilter();
+                // var start = new Date().getTime();
+                // if((new Date().getTime() - start) >= 2000) {
+                //     $scope.updateFilter();
+                // } else {
+                //     $timeout($scope.updateFilter(), 2000);
+                // }
+                // // $timeout($scope.updateFilter(), 2000);
+                $scope.updateFilter();
             };
 
             $scope.updateFilter = function() {
@@ -221,40 +228,46 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                     $scope.bean['filterName'] = $scope.inputLabel.labelFilter;
                     $scope.bean['flag'] = 'filter';
                     $scope.bean['fromIndex'] = 0;
+                    startTime = new Date().getTime();
+                    var canceller = $q.defer();
+                    if($scope.busy && new Date().getTime - startTime >= 5000) {
+                        console.log('get reponse time out');
+                        canceller.resolve('get reponse time out'); 
+                    }
                     $scope.busy = true;
-                    $http.post($scope.filterUrl, $scope.bean)
-                        .success(function(data, status, headers, config) {
-                            if (data.status === 'success') {
-                                $scope.message = data.message;
-                                $scope.filteredModel = data.data.filterRecord;
-                                // $scope.filterInputModel = data.data.filterRecord;
-                                if (!data.data.filterRecord || data.data.filterRecord.length === 0) {
-                                    return false;
-                                }
-                                angular.forEach(data.data.filterRecord, function(value, key) {
-                                    for (var i = 0; i < $scope.filterInputModel.length; i++) {
-                                        if ($scope.filterInputModel[i].id === value.id && $scope.filterInputModel[i].name === value.name) {
-                                            return;
-                                        }
-                                    }
-                                    $scope.filterInputModel.push({
-                                        id: value.id,
-                                        name: value.name,
-                                        ticked: value.ticked
-                                    });
-                                });
-                                $scope.filterInputModel.reverse();
-                                $scope.prepareIndex();
-                            } else {
-                                console.error(data.message);
-                                $scope.message = data.message;
+                    $http.post($scope.filterUrl, $scope.bean, {timeout: canceller.promise})
+                    .success(function(data, status, headers, config) {
+                        if (data.status === 'success') {
+                            $scope.message = data.message;
+                            $scope.filteredModel = data.data.filterRecord;
+                            // $scope.filterInputModel = data.data.filterRecord;
+                            if (!data.data.filterRecord || data.data.filterRecord.length === 0) {
+                                return false;
                             }
-                            $scope.busy = false;
-                        })
-                        .error(function(data, status, headers, config) {
-                            console.error(data);
-                            $scope.busy = false;
-                        });
+                            angular.forEach(data.data.filterRecord, function(value, key) {
+                                for (var i = 0; i < $scope.filterInputModel.length; i++) {
+                                    if ($scope.filterInputModel[i].id === value.id && $scope.filterInputModel[i].name === value.name) {
+                                        return;
+                                    }
+                                }
+                                $scope.filterInputModel.push({
+                                    id: value.id,
+                                    name: value.name,
+                                    ticked: value.ticked
+                                });
+                            });
+                            $scope.filterInputModel.reverse();
+                            $scope.prepareIndex();
+                        } else {
+                            console.error(data.message);
+                            $scope.message = data.message;
+                        }
+                        $scope.busy = false;
+                    })
+                    .error(function(data, status, headers, config) {
+                        console.error(data);
+                        $scope.busy = false;
+                    });
                 }
                 // }
 
@@ -1217,11 +1230,11 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
         '<input name="inputFilter" placeholder="{{lang.search}}" type="text"' +
         'ng-click="select( \'filter\', $event )" ' +
         'ng-model="inputLabel.labelFilter" ' +
-        'ng-change="" class="inputFilter"' +
+        'ng-change="searchChanged()" class="inputFilter" ng-model-options="{debounce: 2000}"' +
         '/>' +
         // clear button
         '<button type="button" class="clearButton" ng-click="clearClicked($event)" >×</button> ' +
-        '<button type="button" class="searchButton" ng-click="searchChanged()" >search</button> ' +
+        // '<button type="button" class="searchButton" ng-click="searchChanged()" >search</button> ' +
         '</div> ' +
         '<div class="line" style="position:relative">' +
         '<span ng-repeat="item in outputModel">' +

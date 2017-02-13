@@ -19,6 +19,9 @@
         "url": "https://github.com/isteven/angular-multi-select/issues"
     },
     "homepage": "https://github.com/isteven/angular-multi-select",
+    "scripts": {
+        "ut": "karma start karma_config"
+    },
     "devDependencies": {
         "chai": "^2.2.0",
         "grunt": "^1.0.1",
