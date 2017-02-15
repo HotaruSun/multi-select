@@ -1,3 +1,29 @@
+/**
+ * - 配置项：
+ *  1. selection-mode：插件的功能模式（single：单选，默认是多选），optional；单选：没有select-all, select-none按钮，只有reset按钮。
+ *  2. filter-url：从server端获取数据的地址，mandatory；
+ *  3. selected-data: 默认初始选中的数据；
+ *  4. output-model：已选项存放的array，mandatory；
+ *  5. button-label：在插件按钮上显示的选中项的字段，mandatory；
+ *  6. item-label：下拉选项显示的字段，mandatory；
+ *  7. tick-property：判断是否已选的标志；
+ *  8. filter-type：根据页面哪个元素id来联动过滤，optional；
+ *  9. filter-data：联动过滤的数据，optional，如果filter-type填了，此项必填；
+ *  10. selector-id：防止页面多个插件导致loadmore功能或其他功能冲突，传入每个插件的id。
+ * - 操作：
+ *  1. 页面load：当第一次进入页面时init一次，获取所有下面的数据，如果有配置selected-data，会有初始选中的选项，button label和插件上的label；
+ *  2. 第一次点击插件：再init一次，如果第一次init时，已有数据的话，不去调server端；（分开判断null和[]）
+ *  3. 按钮点击：select-all；全选；select-none：全不选。reset：原来选上的还是会被选上，没选的还是去掉选择；
+ *  4. 选择一个item：如果是多选，只是把已选的样式改掉，单选的话，窗口会关闭，按钮上的label也会相应的改变，outputmodel里面会存放已选的数据；
+ *     插件上面会有个已选项的label，点击会去掉选择状态；
+ *  5. filter input：filter输入时，如果连续输入，则不会触发搜索功能，如果停止输入2s后，会去server端搜索。如果上次server端还没返回，这次搜索前，会把上次的调用停止，
+ *  然后再去调用server端；输入框旁边的×，可以清楚框内的内容，然后过2s后，会自动再搜索一次；
+ *  6. loadmore：
+ *     初始只会加载前20条数据，如果一共有超过20条的数据的话，最下面会有个loadmore的提示，鼠标滚到底会等待1s后去server端加载另外20条数据，
+ *     如果全部加载完了，或者这次加载没有20条，则不会再显示loadmore提示，也不会再触发加载功能；
+ *  7. 和其他插件的联动加载：另外一个插件的已选项改变时，当前插件的下拉选项会自动做相应的修改，当前插件的已选项和button label也会自动清除。
+ **/
+
 describe('test', function() {
     var $scope, $_compile, $httpBackend, el, template, test;
     let getTest = function($injector, $compile, $rootScope) {
