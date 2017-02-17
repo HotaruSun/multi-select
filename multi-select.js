@@ -126,6 +126,12 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                 if (typeof $scope.bean === 'undefined') {
                     $scope.bean = {};
                 }
+                if(typeof attrs.tickProperty === 'undefined') {
+                    attrs.tickProperty = 'ticked';
+                }
+                if(typeof $scope.tickProperty === 'undefined') {
+                    $scope.tickProperty = 'ticked';
+                }
                 if (!isEmpty($scope.filterUrl) && !$scope.busy) {
                     if ((!$scope.inputModel || $scope.inputModel.length <= 0) || ($scope.filterData && $scope.filterData !== $scope.bean.filterdata)) {
                         // if(typeof $scope.selectedData == 'undefined'){
