@@ -22,14 +22,28 @@
  *     初始只会加载前20条数据，如果一共有超过20条的数据的话，最下面会有个loadmore的提示，鼠标滚到底会等待1s后去server端加载另外20条数据，
  *     如果全部加载完了，或者这次加载没有20条，则不会再显示loadmore提示，也不会再触发加载功能；
  *  7. 和其他插件的联动加载：另外一个插件的已选项改变时，当前插件的下拉选项会自动做相应的修改，当前插件的已选项和button label也会自动清除。
+ * _ 特殊情景：
+ *  1. 页面load时，等待响应，点击展开时，验证是否会给服务器发送请求
+ *  2. 页面load时如果服务响应超时，点击展开时，验证是否需要给服务器发送请求
+ *  3. 第一次点击插件时，等待响应，再次点击时，验证是否会给服务器发送请求
+ *  4. 第一次点击插件时，响应超时，再次点击时，验证是否会给服务器发送请求
+ *  5. 输入filter时，如果查询结果还没返回的时候，继续输入其它内容，验证是否2s会再给服务器发送请求
+ *  6. 输入filter时，如果查询结果返回超时，继续输入其它内容，验证是否2s会再给服务器发送请求
+ *  7. 输入filter时，如果查询结果还没返回的时候，取消输入的内容，再次输入其它内容，验证是否2s会再给服务器发送请求
+ *  8. 输入filter时，如果查询结果返回超时，取消输入的内容，验证是否2s会再给服务器发送请求
+ *  9. loadMore时，如果结果还没有返回时，继续loadMore，验证是否会给服务器端发送请求
+ *  10. loadMore时，如果结果返回超时，继续loadMore，验证是否会给服务器端发送请求
+ *  11. 和其他插件联动加载时，如果两个插件都有select-data ,验证当第一个插件已选项改变时，第二个插件的选项是否会跟随着改变，并验证重置后的值
  **/
-
 describe('test', function() {
-    var $scope, $_compile, $httpBackend, el, template, test;
+    var $scope, $_compile, $httpBackend, el, template, test, $location, $anchorScroll;
     let getTest = function($injector, $compile, $rootScope) {
         $_compile = $compile;
         $scope = $rootScope.$new();
+
         $httpBackend = $injector.get('$httpBackend');
+        $location = $injector.get('$location');
+        $anchorScroll = $injector.get('$anchorScroll');
     };
 
     beforeEach(function() {
@@ -43,11 +57,10 @@ describe('test', function() {
         $httpBackend.verifyNoOutstandingRequest();
     });
     //测试多选模式下组件的元素
-    /*1.当页面上输入控件的指令时，验证会出现的页面元素
-      2.当页面上输入控件的指令时，验证指令里面的model的值（未完成）
-    */
+    /*1.当页面上输入控件的指令时，验证会出现的页面元素以及他们的属性
+     */
     it('it should add this element', function() {
-        el = angular.element('<div isteven-multi-select  output-model="selectedTests" selector-id="selectedTest">');
+        el = angular.element('<div isteven-multi-select  output-model="">');
         template = $_compile(el)($scope);
         $scope.$digest();
         //指令生效时div的属性变化
@@ -57,7 +70,7 @@ describe('test', function() {
         expect(template.find('span').attr('class')).to.equal('multiSelect inlineBlock');
 
         //指令生效时页面上的button数量以及展开按钮的属性
-        expect(template.find('button').length).to.equal(6);
+        expect(template.find('button').length).to.equal(5);
         expect(template.find('button').attr('class')).to.equal('form-control pull-left ng-binding');
         expect(template.find('button').attr('id')).to.equal('');
         expect(template.find('button').attr('type')).to.equal('button');
@@ -108,7 +121,7 @@ describe('test', function() {
 
         //指令生效时页面上的checkBoxContainer属性
         expect(template.find('div').children('div').next().attr('class')).to.equal('checkBoxContainer ng-isolate-scope');
-        expect(template.find('div').children('div').next().attr('id')).to.equal('selectedTest');
+        expect(template.find('div').children('div').next().attr('id')).to.equal('');
         expect(template.find('div').children('div').next().attr('scroll-bottom')).to.equal('loadMore()');
 
         expect(template.find('div').children('div').find('div').attr('class')).to.equal('line ng-scope');
@@ -128,15 +141,14 @@ describe('test', function() {
         expect(template.find('input').attr('type')).to.equal('text');
         expect(template.find('input').attr('ng-click')).to.equal("select( \'filter\', $event )");
         expect(template.find('input').attr('ng-model')).to.equal('inputLabel.labelFilter');
-        expect(template.find('input').attr('ng-change')).to.equal('');
+        expect(template.find('input').attr('ng-change')).to.equal('searchChanged()');
         expect(template.find('input').attr('class')).to.equal('inputFilter ng-pristine ng-untouched ng-valid ng-empty');
     });
     //测试多选模式下组件的元素
-    /*1.当页面上输入控件的指令时，验证会出现的页面元素
-      2.当页面上输入控件的指令时，验证指令里面的model的值（未完成）
-    */
+    /*1.当页面上输入控件的指令时，验证会出现的页面元素以及他们的属性
+     */
     it('it should add this element111', function() {
-        el = angular.element('<div isteven-multi-select selection-mode="single" output-model="selectedTests">');
+        el = angular.element('<div isteven-multi-select selection-mode="single" output-model="">');
         template = $_compile(el)($scope);
         $scope.$digest();
         //指令生效时div的属性变化
@@ -146,7 +158,7 @@ describe('test', function() {
         expect(template.find('span').attr('class')).to.equal('multiSelect inlineBlock');
 
         //指令生效时页面上的button数量以及展开按钮的属性
-        expect(template.find('button').length).to.equal(4);
+        expect(template.find('button').length).to.equal(3);
         expect(template.find('button').attr('class')).to.equal('form-control pull-left ng-binding');
         expect(template.find('button').attr('id')).to.equal('');
         expect(template.find('button').attr('type')).to.equal('button');
@@ -154,7 +166,7 @@ describe('test', function() {
         expect(template.find('button').attr('ng-click')).to.equal('toggleCheckboxes( $event ); refreshSelectedItems(); refreshButton(); prepareGrouping; prepareIndex(); init();');
         expect(template.find('button').attr('ng-disabled')).to.equal('disable-button');
 
-       //指令生效时页面上的重置按钮的属性
+        //指令生效时页面上的重置按钮的属性
         expect(template.find('div').children('div').find('div').children('button').attr('name')).to.equal('reset');
         expect(template.find('div').children('div').find('div').children('button').attr('type')).to.equal('button');
         expect(template.find('div').children('div').find('div').children('button').attr('class')).to.equal('helperButton reset ng-binding ng-scope');
@@ -172,7 +184,7 @@ describe('test', function() {
         expect(template.find('div').length).to.equal(6);
         expect(template.find('div').attr('class')).to.equal('checkboxLayer');
 
-       //指令生效时页面上的checkBoxContainer属性 
+        //指令生效时页面上的checkBoxContainer属性 
         expect(template.find('div').children('div').attr('class')).to.equal('helperContainer ng-scope');
         expect(template.find('div').children('div').attr('ng-if')).to.equal('helperStatus.filter || helperStatus.all || helperStatus.none || helperStatus.reset ');
 
@@ -197,15 +209,127 @@ describe('test', function() {
         expect(template.find('input').attr('type')).to.equal('text');
         expect(template.find('input').attr('ng-click')).to.equal("select( \'filter\', $event )");
         expect(template.find('input').attr('ng-model')).to.equal('inputLabel.labelFilter');
-        expect(template.find('input').attr('ng-change')).to.equal('');
+        expect(template.find('input').attr('ng-change')).to.equal('searchChanged()');
         expect(template.find('input').attr('class')).to.equal('inputFilter ng-pristine ng-untouched ng-valid ng-empty');
     });
-    //测试单选模式下组件里面的点击展开元素以及查询功能
-    /*1.当页面上输入控件的指令时，验证会出现的页面元素
-      2.当页面上输入控件的指令时，验证指令里面的model的值（未完成）
-      3.当页面上输入控件的指令时，验证查询之后返回的结果（未完成）
-    */
+
+    it('it should add this element', function() {
+        $httpBackend.when('POST', '/test/').respond({
+            status: 'success',
+            message: false,
+            data: {
+                filterRecord: [
+                    { id: '1', name: '1', ticked: false }
+                ]
+            }
+        });
+        el = angular.element('<div isteven-multi-select  output-model="" filter-url="/test/" item-label="">');
+        template = $_compile(el)($scope);
+        $scope.$digest();
+        let initButton = angular.element(el.find('button')[0]);
+        initButton.triggerHandler('click');
+        $httpBackend.flush();
+        expect($scope.$$childTail.filterInputModel[0].id).to.equal('1');
+        expect($scope.$$childTail.filterInputModel[0].name).to.equal('1');
+        expect($scope.$$childTail.filterInputModel[0].ticked).to.equal(false);
+    });
+
+    /*it('it should add this element', function() {
+        $httpBackend.when('POST', '/test/').respond({
+            status: 'success',
+            message: false,
+            data: {
+                filterRecord: [
+                    { id: '1', name: '1', ticked: false }
+                ]
+            }
+        });
+        el = angular.element('<div isteven-multi-select  output-model="" filter-url="tet" item-label="">');
+        template = $_compile(el)($scope);
+        $scope.$digest();
+        let initButton = angular.element(el.find('button')[0]);
+        initButton.triggerHandler('click');
+        $httpBackend.flush();
+        expect($scope.$$childTail.filterInputModel[0].id).to.equal('1');
+        expect($scope.$$childTail.filterInputModel[0].name).to.equal('1');
+        expect($scope.$$childTail.filterInputModel[0].ticked).to.equal(false);
+    });*/
+
+    it('it should add this element', function() {
+        $httpBackend.when('POST', '/test/').respond({
+            status: 'success',
+            message: false,
+            data: {
+                filterRecord: [
+                    { id: '1', name: '1', ticked: false },
+                    { id: '2', name: '2', ticked: false },
+                    { id: '3', name: '3', ticked: false }
+                ]
+            }
+        });
+        el = angular.element('<div isteven-multi-select filter-url="/test/" selected-data= "testData" output-model="">');
+        template = $_compile(el)($scope);
+        $scope.$digest();
+        console.log($scope.$$childTail.testData);
+
+        /*$scope.$digest();
+        $scope.$$childTail.testData=testData;
+        console.log($scope.testData);
+        console.log($scope.$$childTail.testData);
+        //expect($scope.$$childTail).to.equal('1');*/
+    });
+
     it('test first button for single selection', function() {
+        $httpBackend.when('POST', '/test/').respond({
+            status: 'success',
+            message: false,
+            data: {
+                filterRecord: [
+                    { id: '1', name: '1', ticked: false },
+                    { id: '2', name: '2', ticked: false },
+                    { id: '3', name: '3', ticked: false }
+                ]
+            }
+        });
+
+        el = angular.element('<div isteven-multi-select selection-mode="single" filter-url="/test/" button-label="name" item-label="name" output-model="selectedTests"></div>');
+        template = $_compile(el)($scope);
+        $scope.$digest();
+        let initButton = angular.element(el.find('button')[0]);
+        initButton.triggerHandler('click');
+        $httpBackend.flush();
+        //点击事件生效时页面上的div数量
+        let checkBoxContainerFirstDiv = template.find('div').children('div').next().children('div');
+        expect(template.find('div').children('div').next().children('div').length).to.equal(7);
+        //点击事件生效时页面上每个返回结果的div的属性
+        for (var i = 0; i < 3; i++) {
+            expect(checkBoxContainerFirstDiv.attr('name')).to.equal('' + (i + 1));
+            expect(checkBoxContainerFirstDiv.attr('ng-repeat')).to.equal('item in filteredModel | filter:removeGroupEndMarker');
+            expect(checkBoxContainerFirstDiv.attr('class')).to.equal('multiSelectItem ng-scope vertical');
+            expect(checkBoxContainerFirstDiv.attr('ng-class')).to.equal('{selected: item[ tickProperty ], horizontal: orientationH, vertical: orientationV, multiSelectGroup:item[ groupProperty ], disabled:itemIsDisabled( item )}');
+            expect(checkBoxContainerFirstDiv.attr('ng-click')).to.equal('syncItems( item, $event, $index );');
+            expect(checkBoxContainerFirstDiv.attr('ng-mouseleave')).to.equal('removeFocusStyle( tabIndex );');
+            expect(checkBoxContainerFirstDiv.children('div').attr('class')).to.equal('acol');
+            //expect(checkBoxContainerFirstDiv.children('div').children('label').length).to.equal(1);
+            expect(checkBoxContainerFirstDiv.children('div').find('input').attr('class')).to.equal('checkbox focusable');
+            expect(checkBoxContainerFirstDiv.children('div').find('input').attr('type')).to.equal('checkbox');
+            expect(checkBoxContainerFirstDiv.children('div').find('input').attr('ng-disabled')).to.equal('itemIsDisabled( item )');
+            expect(checkBoxContainerFirstDiv.children('div').find('input').attr('ng-checked')).to.equal('item[ tickProperty ]');
+            expect(checkBoxContainerFirstDiv.children('div').find('input').attr('ng-click')).to.equal('syncItems( item, $event, $index )');
+            expect(checkBoxContainerFirstDiv.children('div').find('input').attr('value')).to.equal('' + (i + 1));
+            expect(checkBoxContainerFirstDiv.children('div').find('span').attr('ng-class')).to.equal('{disabled:itemIsDisabled( item )}');
+            expect(checkBoxContainerFirstDiv.children('div').find('span').attr('ng-bind-html')).to.equal("writeLabel( item, 'itemLabel' )");
+            expect(checkBoxContainerFirstDiv.children('div').find('span').attr('class')).to.equal('ng-binding');
+            //expect(checkBoxContainerFirstDiv.children('div').find('span').getText()).to.equal(''+(i+1));
+            checkBoxContainerFirstDiv = checkBoxContainerFirstDiv.next();
+        }
+        console.log($scope.selectedTests);
+    });
+
+    //测试单选模式下组件里面的点击展开元素以及查询功能
+    /*1.点击init按钮的出现的值的验证（包括页面的div的验证以及各个model里面的值验证）
+     */
+    xit('test first button for single selection', function() {
         $httpBackend.when('POST', '/test/').respond({
             status: 'success',
             message: false,
@@ -221,15 +345,12 @@ describe('test', function() {
         el = angular.element('<div isteven-multi-select selection-mode="single" filter-url="/test/" output-model="selectedTests" button-label="name" item-label="name" tick-property="ticked" selected-data="testData"></div>');
         template = $_compile(el)($scope);
         $scope.$digest();
-
         let initButton = angular.element(el.find('button')[0]);
         initButton.triggerHandler('click');
         $httpBackend.flush();
-
         //点击事件生效时页面上的div数量
         let checkBoxContainerFirstDiv = template.find('div').children('div').next().children('div');
         expect(template.find('div').children('div').next().children('div').length).to.equal(8);
-
         //点击事件生效时页面上每个返回结果的div的属性
         for (var i = 0; i < 3; i++) {
             expect(checkBoxContainerFirstDiv.attr('name')).to.equal('' + (i + 1));
@@ -254,11 +375,9 @@ describe('test', function() {
         }
     });
     // 测试多选模式下查询之后全选按钮
-    /*1.当页面上输入控件的指令时，验证会出现的页面元素
-      2.当页面上输入控件的指令时，验证指令里面的model的值（未完成）
-      3.当页面上输入控件的指令时，验证查询之后返回的结果（未完成）
-    */
-    it('test selectAll button', function() {
+    /*1.点击全选按钮时的验证（页面的验证和各个model里面值的验证）
+     */
+    xit('test selectAll button', function() {
         $httpBackend.when('POST', '/test/').respond({
             status: 'success',
             message: false,
@@ -282,7 +401,6 @@ describe('test', function() {
         $httpBackend.flush();
 
         selectAllButton.triggerHandler('click');
-
         let firstTestSpan = template.find('div').children('div').children('div').next().next().children('span');
         //点击事件生效时页面上每个应该被选中的div的属性变化
         for (var i = 0; i < 3; i++) {
@@ -298,11 +416,9 @@ describe('test', function() {
         }
     });
     //测试多选模式下的全不选按钮
-    /*1.当页面上输入控件的指令时，验证会出现的页面元素
-      2.当页面上输入控件的指令时，验证指令里面的model的值（未完成）
-      3.当页面上输入控件的指令时，验证查询之后返回的结果（未完成）
-    */
-    it('test selectNone button', function() {
+    /*1.点击全不选按钮时的验证（页面的验证和各个model里面值的验证）
+     */
+    xit('test selectNone button', function() {
         $httpBackend.when('POST', '/test/').respond({
             status: 'success',
             message: false,
@@ -315,10 +431,9 @@ describe('test', function() {
             }
         });
 
-        el = angular.element('<div isteven-multi-select filter-url="/test/" output-model="selectedTests" button-label="name" item-label="name" tick-property="ticked" selected-data="testData"></div>');
+        el = angular.element('<div isteven-multi-select filter-url="/test/" input-model="ss" output-model="selectedTests" button-label="name" item-label="name" tick-property="ticked" selected-data="testData"></div>');
         template = $_compile(el)($scope);
         $scope.$digest();
-
         let initButton = angular.element(el.find('button')[0]);
         let selectAllButton = angular.element(el.find('div').children('div').children('div').children('button')[0]);
         let selectNoneButton = angular.element(el.find('div').children('div').children('div').children('button')[1]);
@@ -327,6 +442,7 @@ describe('test', function() {
         $httpBackend.flush();
 
         selectAllButton.triggerHandler('click');
+        //console.log($scope);
         selectNoneButton.triggerHandler('click');
 
         let firstTestSpan = template.find('div').children('div').children('div').next().next().children('span');
@@ -336,12 +452,10 @@ describe('test', function() {
     });
 
     //测试多选模式下的查询输入框的功能
-    /*1.当页面上输入控件的指令时，验证会出现的页面元素
-      2.当页面上输入控件的指令时，验证指令里面的model的值（未完成）
-      3.当页面上输入控件的指令时，验证查询之后返回的结果（未完成）
-    */
+    /*1.查询输入框输入时的验证（页面的验证和各个model里面值的验证）
+     */
     // currently we can not simulate the response result according to the search/filter condition, so we comment this 'it' for the time being, TODO, ...
-    it('test inputFilter', function() {
+    xit('test inputFilter', function() {
         $httpBackend.whenPOST('/test/').respond(function(method, url, data) {
             var datas = {};
             data = JSON.parse(data);
@@ -412,8 +526,10 @@ describe('test', function() {
     });
 
     // currently we can not simulate the response result according to the search/filter condition, so we comment this 'it' for the time being, TODO, ...
-    //未完成
-    xit('test loadMore', function() {
+    //测试多选模式下的loadMore的功能
+    /*1.loadMore时的验证（页面的验证和各个model里面值的验证）
+     */
+    it('test loadMore', function() {
         let filterRecord = [];
         let obj;
         let data = {};
@@ -425,26 +541,49 @@ describe('test', function() {
             filterRecord.push(obj);
         }
         data.filterRecord = filterRecord;
-        $httpBackend.when('POST', '/test/').respond({
-            status: 'success',
-            message: false,
-            data
+        $httpBackend.when('POST', '/test/').respond(function(method, url, Data) {
+            let datas = {
+                status: 'success',
+                message: false,
+                data
+            };
+            return [200, datas];
         });
 
-        el = angular.element('<div isteven-multi-select filter-url="/test/" output-model="selectedTests" button-label="name" item-label="name" tick-property="ticked" selected-data="testData"></div>');
+        el = angular.element('<div isteven-multi-select filter-url="/test/" output-model="selectedTests" button-label="name" item-label="name" tick-property="ticked" selected-data="testData" selector-id="selectedTest"></div>');
         template = $_compile(el)($scope);
         $scope.$digest();
 
+        console.log(angular.element(template.find('div').children('div').next()[0]));
         let initButton = angular.element(el.find('button')[0]);
 
         initButton.triggerHandler('click');
         $httpBackend.flush();
-        $httpBackend.expectPOST('/test/');
-
+        //console.log(angular.element(template.find('div').children('div').next()[0]));
+        //$httpBackend.expectPOST('/test/');
+        //console.log($scope.$$childTail.$id);
         let checkBoxContainerFirstDiv = template.find('div').children('div').next().children('div');
-        //expect(template.find('div').children('div').next().children('div').length).to.equal(7);
+        // let elem = angular.element(template.find('div').children('div').next()[0]);
+        let elem = angular.element(template.find('div').children('div').next()[0]);
+        //console.log(angular.element(template.find('div').children('div').next().children('div')[19]));
+        // elem = elem[0] || elem;
+        //console.log(elem);
+        console.log(elem.scrollHeight);
+        // elem = elem[0] || elem;
+        // $location.hash('loadMore');
+        // $anchorScroll();
+        // console.log('$location >>>>', $location);
+        // console.log(elem.offsetHeight);
+        // console.log(elem.scrollTop);
 
-        for (var j = 0; j < 40; j++) {
+
+        // elem.offsetHeight = 1;
+        //console.log($scope.filteredModel);
+        //console.log(template.find('div').children('div').next().children('div'));
+        //window.scrollTo(0, angular.element(template.find('div').children('div').next().children('div')[19]));
+        console.log($scope.$$childTail.hasMore);
+        //expect(template.find('div').children('div').next().children('div').length).to.equal(7);
+        /*for (var j = 0; j < 40; j++) {
             expect(checkBoxContainerFirstDiv.attr('name')).to.equal('name' + (j + 1));
             expect(checkBoxContainerFirstDiv.attr('ng-repeat')).to.equal('item in filteredModel | filter:removeGroupEndMarker');
             expect(checkBoxContainerFirstDiv.attr('class')).to.equal('multiSelectItem ng-scope selected vertical');
@@ -463,15 +602,13 @@ describe('test', function() {
             expect(checkBoxContainerFirstDiv.children('div').find('span').attr('ng-bind-html')).to.equal("writeLabel( item, 'itemLabel' )");
             expect(checkBoxContainerFirstDiv.children('div').find('span').attr('class')).to.equal('ng-binding');
             checkBoxContainerFirstDiv = checkBoxContainerFirstDiv.next();
-        }
+        }*/
     });
 
     // 测试多选模式下的重置按钮
-    /*1.当页面上输入控件的指令时，验证会出现的页面元素
-      2.当页面上输入控件的指令时，验证指令里面的model的值（未完成）
-      3.当页面上输入控件的指令时，验证查询之后返回的结果（未完成）
-    */
-    it('test reset button', function() {
+    /*1.点击重置时的验证（页面的验证和各个model里面值的验证）
+     */
+    xit('test reset button', function() {
         $httpBackend.when('POST', '/test/').respond({
             status: 'success',
             message: false,
@@ -487,7 +624,6 @@ describe('test', function() {
         el = angular.element('<div isteven-multi-select filter-url="/test/" output-model="selectedTests" button-label="name" item-label="name" tick-property="ticked" selected-data="testData"></div>');
         template = $_compile(el)($scope);
         $scope.$digest();
-
         let initButton = angular.element(el.find('button')[0]);
         let selectAllButton = angular.element(el.find('div').children('div').children('div').children('button')[0]);
         let resetButton = angular.element(el.find('div').children('div').children('div').children('button')[2]);
@@ -505,11 +641,9 @@ describe('test', function() {
     });
 
     //测试单选模式下的选中
-    /*1.当页面上输入控件的指令时，验证会出现的页面元素
-      2.当页面上输入控件的指令时，验证指令里面的model的值（未完成）
-      3.当页面上输入控件的指令时，验证查询之后返回的结果（未完成）
-    */
-    it('test first button for selections', function() {
+    /*1.点击选中时的验证（页面的验证和各个model里面值的验证）
+     */
+    xit('test first button for selections', function() {
         $httpBackend.when('POST', '/test/').respond({
             status: 'success',
             message: false,
@@ -541,11 +675,9 @@ describe('test', function() {
         expect(angular.element(template.children('span').children().find('div')[0]).text()).to.equal(' 1');
     });
     //测试多选模式下的选中
-    /*1.当页面上输入控件的指令时，验证会出现的页面元素
-      2.当页面上输入控件的指令时，验证指令里面的model的值（未完成）
-      3.当页面上输入控件的指令时，验证查询之后返回的结果（未完成）
-    */
-    it('test first button for selections', function() {
+    /*1.点击选中时的验证（页面的验证和各个model里面值的验证）
+     */
+    xit('test first button for selections', function() {
         $httpBackend.when('POST', '/test/').respond({
             status: 'success',
             message: false,
@@ -561,7 +693,6 @@ describe('test', function() {
         el = angular.element('<div isteven-multi-select filter-url="/test/" output-model="selectedTests" button-label="name" item-label="name" tick-property="ticked" selected-data="testData"></div>');
         template = $_compile(el)($scope);
         $scope.$digest();
-
         let initButton = angular.element(el.find('button')[0]);
 
         initButton.triggerHandler('click');
@@ -573,7 +704,6 @@ describe('test', function() {
 
         firstTest.triggerHandler('click');
         secondTest.triggerHandler('click');
-
         let firstTestSpan = angular.element(template.find('div').children('div').children('div').next().next().children('span')[0]);
         let secondTestSpan = angular.element(template.find('div').children('div').children('div').next().next().children('span')[1]);
 
@@ -584,3 +714,4 @@ describe('test', function() {
 
     });
 });
+//当页面页面上同时出现两个multiSelect时,验证其是否冲突
