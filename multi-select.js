@@ -143,7 +143,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                             if(typeof value === 'object') {
                                 if(value.length > 0) {
                                     $scope.bean.filterBy += ' AND `' + filter + '` in (';
-                                    for(var i, len = value.length; i < len; i++) {
+                                    for(var i = 0, len = value.length; i < len; i++) {
                                         $scope.bean.filterBy += '"' + (value[i].id?value[i].id:value[i].name) + '"';
                                     }
                                     $scope.bean.filterBy += ')';
