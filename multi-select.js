@@ -43,8 +43,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
             outputModel: '=',
             selectedData: '=',
             filterUrl: '@',
-            filterType: '@',
-            filterData: '=',
+            otherFilterData: '=',
             selectorId: '@',
 
             // settings based on attribute
@@ -114,11 +113,66 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
             };
 
             // 
-            $scope.$watch('filterData', function(newVal) {
+            $scope.$watch('otherFilterData', function(newVal) {
                 if (newVal) {
                     $scope.init();
                 }
             }, true);
+
+            /**
+             * get other filter data from page attribute
+             * it can set multiple object
+             * data formate is like {merchantid: selectedMerchants, custid: selectedCustomers}
+             **/
+            function getOtherFilterData() {
+                if(typeof $scope.otherFilterData !== 'undefined') {
+                    var filter = '';
+                    $scope.bean.filterBy = '';
+                    for(var key in $scope.otherFilterData) {
+                        if(key != null && key !== '') {
+                            if(key.toUpperCase().indexOf('MERCHANT') >= 0) {
+                                filter = 'merchantid';
+                            } else if(key.toUpperCase().indexOf('CUST') >= 0) {
+                                filter = 'custid';
+                            } else if(key.toUpperCase().indexOf('PURCHASEIN') >= 0) {
+                                filter = 'purchaseinid';
+                            }
+                        }
+                        var value = $scope.otherFilterData[key];
+                        if(typeof value !== 'undefined') {
+                            if(typeof value === 'object') {
+                                if(value.length > 0) {
+                                    $scope.bean.filterBy += ' AND `' + filter + '` in (';
+                                    for(var i, len = value.length; i < len; i++) {
+                                        $scope.bean.filterBy += '"' + (value[i].id?value[i].id:value[i].name) + '"';
+                                    }
+                                    $scope.bean.filterBy += ')';
+                                }
+                            } else {
+                                $scope.bean.filterBy += ' AND `' + filter + '` = "' + value + '"';
+                            }
+                        }
+                    }
+                }
+            }
+
+            /**
+             * tick the item in selectedData
+             **/
+            function setDefaultTickedData() {
+                if(typeof $scope.inputModel !== 'undefined' && $scope.inputModel.length > 0) {
+                    if (typeof $scope.selectedData !== 'undefined' && $scope.selectedData.length > 0) {
+                        $scope.inputModel.forEach(function(input) {
+                            $scope.selectedData.forEach(function(selected) {
+                                if(input.id === selected || input.name === selected) {
+                                    input.ticked = true;
+                                    return;
+                                }
+                            });
+                        });
+                    }
+                }
+            }
 
             $scope.busy = false;
 
@@ -132,8 +186,8 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                 if(typeof $scope.tickProperty === 'undefined') {
                     $scope.tickProperty = 'ticked';
                 }
-                if (!isEmpty($scope.filterUrl) && !$scope.busy) {
-                    if ((!$scope.inputModel || $scope.inputModel.length <= 0) || ($scope.filterData && $scope.filterData !== $scope.bean.filterdata)) {
+                if ($scope.filterUrl != null && $scope.filterUrl !== '' && !$scope.busy) {
+                    if ((!$scope.inputModel || $scope.inputModel.length <= 0) || ($scope.otherFilterData && $scope.otherFilterData !== $scope.bean.otherFilterData)) {
                         // if(typeof $scope.selectedData == 'undefined'){
                         //     $scope.selectedData = {};
                         // }
@@ -147,40 +201,43 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                                 }
                             }
                         });
+                        
                         $scope.refreshOutputModel();
                         if ($scope.outputModel.length === 0) {
                             $scope.refreshButton();
                         }
 
-                        $scope.refreshOutputModel();
-                        $scope.refreshButton();
-                        $scope.onSelectNone();
+                        // $scope.refreshOutputModel();
+                        // $scope.refreshButton();
+                        // $scope.onSelectNone();
 
-                        $scope.bean.selecteddata = $scope.selectedData;
-                        $scope.bean.filtertype = $scope.filterType;
-                        $scope.bean.filterdata = $scope.filterData;
+                        
+                        $scope.bean.otherFilterData = $scope.otherFilterData;
+
+                        getOtherFilterData();
+
                         $scope.busy = true;
                         $http.post($scope.filterUrl, $scope.bean)
-                            .success(function(data, status, headers, config) {
-                                if (data.status === 'success') {
-                                    $scope.message = data.message;
-                                    if (!data.data.filterRecord || data.data.filterRecord.length === 0) {
-                                        $scope.inputModel = [];
-                                        return false;
-                                    }
-                                    $scope.inputModel = data.data.filterRecord;
-                                    // $scope.inputModel.reverse();
-                                    $scope.prepareIndex();
-                                } else {
-                                    console.error(data.message);
-                                    $scope.message = data.message;
+                        .success(function(data, status, headers, config) {
+                            if (data.status === 'success') {
+                                $scope.message = data.message;
+                                if (!data.data.filterRecord || data.data.filterRecord.length === 0) {
+                                    $scope.inputModel = [];
+                                    return false;
                                 }
-                                $scope.busy = false;
-                            })
-                            .error(function(data, status, headers, config) {
-                                $scope.busy = false;
-                                console.error(data);
-                            });
+                                $scope.inputModel = data.data.filterRecord;
+                                setDefaultTickedData();
+                                $scope.prepareIndex();
+                            } else {
+                                console.error(data.message);
+                                $scope.message = data.message;
+                            }
+                            $scope.busy = false;
+                        })
+                        .error(function(data, status, headers, config) {
+                            $scope.busy = false;
+                            console.error(data);
+                        });
                     } else {
                         $scope.busy = false;
                     }
@@ -190,7 +247,6 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                 $scope.filterInputModel = $scope.inputModel;
             };
 
-            // $scope.init();
 
             // A little hack so that AngularJS ng-repeat can loop using start and end index like a normal loop
             // http://stackoverflow.com/questions/16824853/way-to-ng-repeat-defined-number-of-times-instead-of-repeating-over-array
