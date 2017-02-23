@@ -161,7 +161,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
              * tick the item in selectedData
              **/
             function setDefaultTickedData() {
-                if(typeof $scope.selectedData !== 'undefined') {
+                if($scope.selectedData != null && $scope.selectedData.length > 0) { // currently we have not yet handle the number types, TODO
                     var postBean = {};
                     postBean.filterBy = $scope.selectedData;
                     if($scope.selectorId != null && $scope.selectorId !== '') {
