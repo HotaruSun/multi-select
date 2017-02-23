@@ -160,21 +160,154 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
              * tick the item in selectedData
              **/
             function setDefaultTickedData() {
-                if(typeof $scope.inputModel !== 'undefined' && $scope.inputModel.length > 0) {
-                    if (typeof $scope.selectedData !== 'undefined' && $scope.selectedData.length > 0) {
-                        $scope.inputModel.forEach(function(input) {
-                            $scope.selectedData.forEach(function(selected) {
-                                if(input.id === selected || input.name === selected) {
-                                    input.ticked = true;
-                                    return;
+                if(typeof $scope.selectedData !== 'undefined') {
+                    var postBean = {};
+                    postBean.filterBy = $scope.selectedData;
+                    if($scope.selectorId != null && $scope.selectorId !== '') {
+                        if($scope.selectorId.toUpperCase().indexOf('MERCHANT') >= 0) {
+                            postBean.DBObj = 'Merchant';
+                        } else if($scope.selectorId.toUpperCase().indexOf('CUST') >= 0) {
+                            postBean.DBObj = 'Customer';
+                        } else if($scope.selectorId.toUpperCase().indexOf('VENDOR') >= 0) {
+                            postBean.DBObj = 'Vendor';
+                        } else if($scope.selectorId.toUpperCase().indexOf('ENGINEER') >= 0) {
+                            postBean.DBObj = 'User';
+                        } else if($scope.selectorId.toUpperCase().indexOf('PURCHASEIN') >= 0) {
+                            postBean.DBObj = 'PurchaseIn';
+                        }
+                    }
+                    postBean.need = attrs.buttonLabel;
+                    $http.post('/admin/multiselector/setdefaultticked', postBean)
+                    .success(function(data, status, headers, config) {
+                        if (data.status === 'success') {
+                            $scope.message = data.message;
+                            if (!data.data.filterRecord || data.data.filterRecord.length === 0) {
+                                return false;
+                            }
+                            data.data.filterRecord.forEach(function(item) {
+                                // outputmodel must contain id and name, so when record is not contain id, should set it
+                                var i, len;
+                                if(attrs.buttonLabel !== 'id') {
+                                    if(typeof $scope.selectedData === 'object') {
+                                        for(i = 0, len = $scope.selectedData.length; i < len; i++) {
+                                            $scope.outputModel.push({
+                                                id: $scope.selectedData[i],
+                                                name: item[attrs.buttonLabel],
+                                                ticked: true
+                                            });
+                                            break;
+                                        }
+                                    } else {
+                                        $scope.outputModel.push({
+                                            id: $scope.selectedData,
+                                            name: item[attrs.buttonLabel],
+                                            ticked: true
+                                        });
+                                    }
+                                } else if(attrs.buttonLabel !== 'name'){
+                                    if(typeof $scope.selectedData === 'object') {
+                                        for(i = 0, len = $scope.selectedData.length; i < len; i++) {
+                                            $scope.outputModel.push({
+                                                id: item[attrs.buttonLabel],
+                                                name: $scope.selectedData[i],
+                                                ticked: true
+                                            });
+                                            break;
+                                        }
+                                    } else {
+                                        $scope.outputModel.push({
+                                            id: item[attrs.buttonLabel],
+                                            name: $scope.selectedData,
+                                            ticked: true
+                                        });
+                                    }
                                 }
                             });
-                        });
+                            // $scope.prepareIndex();
+                            $scope.refreshButton();
+                        } else {
+                            console.error(data.message);
+                        }
+                        $scope.busy = false;
+                    })
+                    .error(function(data, status, headers, config) {
+                        $scope.busy = false;
+                        console.error(data);
+                    });
+                }
+            }
+
+            function tickDefault(model) {
+                if(typeof model !== 'undefined' && model.length > 0) {
+                    if (typeof $scope.outputModel !== 'undefined') {
+                        if($scope.outputModel.length > 0) {
+                            model.forEach(function(input) {
+                                $scope.outputModel.forEach(function(output) {
+                                    if(input.id === output.id || input.name === output.name) {
+                                        input.ticked = true;
+                                        $scope.refreshOutputModel();
+                                        $scope.refreshButton();
+                                        return;
+                                    }
+                                });
+                            });
+                        }
                     }
                 }
             }
 
             $scope.busy = false;
+
+            function getInputModelFromServer() {
+                if ((!$scope.inputModel || $scope.inputModel.length <= 0) || ($scope.otherFilterData && $scope.otherFilterData !== $scope.bean.otherFilterData)) {
+                    $scope.bean.fromIndex = 0;
+                    $scope.bean.flag = 'init';
+
+                    angular.forEach($scope.filteredModel, function(value, key) { // clean up the selected data
+                        if (typeof value !== 'undefined' && value[attrs.disableProperty] !== true) {
+                            if (typeof value[attrs.groupProperty] === 'undefined') {
+                                value[$scope.tickProperty] = false;
+                            }
+                        }
+                    });
+                    
+                    // $scope.refreshOutputModel();
+                    // if ($scope.outputModel.length === 0) {
+                    //     $scope.refreshButton();
+                    // }
+
+                    $scope.bean.otherFilterData = $scope.otherFilterData;
+
+                    getOtherFilterData();
+
+                    $scope.busy = true;
+                    $http.post($scope.filterUrl, $scope.bean)
+                    .success(function(data, status, headers, config) {
+                        if (data.status === 'success') {
+                            $scope.message = data.message;
+                            if (!data.data.filterRecord || data.data.filterRecord.length === 0) {
+                                $scope.inputModel = [];
+                                return false;
+                            }
+                            $scope.inputModel = data.data.filterRecord;
+                            $scope.filterInputModel = $scope.inputModel;
+                            tickDefault($scope.filterInputModel);
+                            $scope.refreshButton();
+                            $scope.prepareIndex();
+                        } else {
+                            console.error(data.message);
+                            $scope.message = data.message;
+                        }
+                        $scope.busy = false;
+                    })
+                    .error(function(data, status, headers, config) {
+                        $scope.busy = false;
+                        console.error(data);
+                    });
+                } else {
+                    $scope.busy = false;
+                }
+            }
 
             $scope.init = function() {
                 if (typeof $scope.bean === 'undefined') {
@@ -187,64 +320,18 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                     $scope.tickProperty = 'ticked';
                 }
                 if ($scope.filterUrl != null && $scope.filterUrl !== '' && !$scope.busy) {
-                    if ((!$scope.inputModel || $scope.inputModel.length <= 0) || ($scope.otherFilterData && $scope.otherFilterData !== $scope.bean.otherFilterData)) {
-                        // if(typeof $scope.selectedData == 'undefined'){
-                        //     $scope.selectedData = {};
-                        // }
-                        $scope.bean.fromIndex = 0;
-                        $scope.bean.flag = 'init';
-
-                        angular.forEach($scope.filteredModel, function(value, key) { // clean up the selected data
-                            if (typeof value !== 'undefined' && value[attrs.disableProperty] !== true) {
-                                if (typeof value[attrs.groupProperty] === 'undefined') {
-                                    value[$scope.tickProperty] = false;
-                                }
-                            }
-                        });
-                        
-                        $scope.refreshOutputModel();
-                        if ($scope.outputModel.length === 0) {
-                            $scope.refreshButton();
-                        }
-
-                        // $scope.refreshOutputModel();
-                        // $scope.refreshButton();
-                        // $scope.onSelectNone();
-
-                        
-                        $scope.bean.otherFilterData = $scope.otherFilterData;
-
-                        getOtherFilterData();
-
-                        $scope.busy = true;
-                        $http.post($scope.filterUrl, $scope.bean)
-                        .success(function(data, status, headers, config) {
-                            if (data.status === 'success') {
-                                $scope.message = data.message;
-                                if (!data.data.filterRecord || data.data.filterRecord.length === 0) {
-                                    $scope.inputModel = [];
-                                    return false;
-                                }
-                                $scope.inputModel = data.data.filterRecord;
-                                setDefaultTickedData();
-                                $scope.prepareIndex();
-                            } else {
-                                console.error(data.message);
-                                $scope.message = data.message;
-                            }
-                            $scope.busy = false;
-                        })
-                        .error(function(data, status, headers, config) {
-                            $scope.busy = false;
-                            console.error(data);
-                        });
-                    } else {
-                        $scope.busy = false;
-                    }
+                    setDefaultTickedData();
                 } else {
                     $scope.busy = false;
                 }
-                $scope.filterInputModel = $scope.inputModel;
+            };
+
+            $scope.filter = function() {
+                if ($scope.filterUrl != null && $scope.filterUrl !== '' && !$scope.busy) {
+                    getInputModelFromServer();
+                } else {
+                    $scope.busy = false;
+                }
             };
 
 
@@ -314,11 +401,11 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                                 }
                                 $scope.filterInputModel.push({
                                     id: value.id,
-                                    name: value.name,
-                                    ticked: value.ticked
+                                    name: value.name
                                 });
                             });
-                            $scope.filterInputModel.reverse();
+                            tickDefault($scope.filteredModel);
+                            // $scope.filterInputModel.reverse();
                             $scope.prepareIndex();
                         } else {
                             console.error(data.message);
@@ -365,44 +452,39 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
 
             $scope.hasMore = true;
             $scope.loadMore = function() {
-                // console.log('loadMore');
                 if ($scope.filteredModel.length >= 20) {
                     $scope.bean = {};
                     $scope.bean.fromIndex = $scope.filteredModel.length;
                     $scope.bean.flag = 'scoller';
                     $http.post($scope.filterUrl, $scope.bean)
-                        .success(function(data, status, headers, config) {
-                            if (data.status === 'success') {
-                                $scope.message = data.message;
-                                if (!data.data.filterRecord || data.data.filterRecord.length === 0) {
-                                    $scope.hasMore = false;
-                                    return false;
-                                }
-                                if (data.data.filterRecord.length < 20) {
-                                    $scope.hasMore = false;
-                                }
-                                angular.forEach(data.data.filterRecord, function(value, key) {
-                                    $scope.filteredModel.push({
-                                        id: value.id,
-                                        name: value.name,
-                                        ticked: value.ticked
-                                    });
-                                    $scope.filterInputModel.push({
-                                        id: value.id,
-                                        name: value.name,
-                                        ticked: value.ticked
-                                    });
-                                });
-                                // $scope.filteredModel.reverse();
-                                $scope.prepareIndex();
-                            } else {
-                                console.error(data.message);
-                                $scope.message = data.message;
+                    .success(function(data, status, headers, config) {
+                        if (data.status === 'success') {
+                            $scope.message = data.message;
+                            if (!data.data.filterRecord || data.data.filterRecord.length === 0) {
+                                $scope.hasMore = false;
+                                return false;
                             }
-                        })
-                        .error(function(data, status, headers, config) {
-                            console.error(data);
-                        });
+                            if (data.data.filterRecord.length < 20) {
+                                $scope.hasMore = false;
+                            }
+                            angular.forEach(data.data.filterRecord, function(value, key) {
+                                $scope.filterInputModel.push({
+                                    id: value.id,
+                                    name: value.name
+                                });
+                            });
+                            // $scope.inputModel = $scope.filterInputModel;
+                            $scope.filteredModel = $scope.filterInputModel;
+                            tickDefault($scope.filteredModel);
+                            $scope.prepareIndex();
+                        } else {
+                            console.error(data.message);
+                            $scope.message = data.message;
+                        }
+                    })
+                    .error(function(data, status, headers, config) {
+                        console.error(data);
+                    });
                 }
             };
 
@@ -1188,12 +1270,12 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
             // watch1, for changes in input model property
             // updates multi-select when user select/deselect a single checkbox programatically
             // https://github.com/isteven/angular-multi-select/issues/8            
-            $scope.$watch('inputModel', function(newVal) {
+            /*$scope.$watch('inputModel', function(newVal) {
                 if (newVal) {
                     $scope.refreshOutputModel();
                     $scope.refreshButton();
                 }
-            }, true);
+            }, true);*/
 
             // watch2 for changes in input model as a whole
             // this on updates the multi-select when a user load a whole new input-model. We also update the $scope.backUp variable
@@ -1203,8 +1285,8 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                     $scope.updateFilter();
                     $scope.prepareGrouping();
                     $scope.prepareIndex();
-                    $scope.refreshOutputModel();
-                    $scope.refreshButton();
+                    // $scope.refreshOutputModel();
+                    // $scope.refreshButton();
                 }
             });
 
@@ -1252,7 +1334,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
         '<span class="multiSelect inlineBlock">' +
         // main button, modified by sun
         '<button class="form-control pull-left" id="{{directiveId}}" type="button"' +
-        'ng-click="toggleCheckboxes( $event ); refreshSelectedItems(); refreshButton(); prepareGrouping; prepareIndex(); init();"' +
+        'ng-click="toggleCheckboxes( $event ); refreshSelectedItems(); refreshButton(); prepareGrouping; prepareIndex(); filter();"' +
         'ng-bind-html="varButtonLabel"' +
         'ng-disabled="disable-button"' +
         '>' +
