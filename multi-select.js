@@ -40,8 +40,8 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
         scope: {
             // models
             // inputModel: '=',
-            outputModel: '=',
-            selectedData: '=',
+            outputData: '=',
+            initData: '=',
             filterUrl: '@',
             otherFilterData: '=',
             selectorId: '@',
@@ -114,7 +114,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
 
             $scope.$watch('otherFilterData', function(oldVal, newVal) {
                 if (newVal !== oldVal) {
-                    $scope.refreshOutputModel();
+                    $scope.refreshOutputData();
                     $scope.refreshButton();
                     $scope.filter();
                 }
@@ -158,12 +158,12 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
             }
 
             /**
-             * tick the item in selectedData
+             * tick the item in initData
              **/
             function setDefaultTickedData() {
-                if($scope.selectedData != null && $scope.selectedData.length > 0) { // currently we have not yet handle the number types, TODO
+                if($scope.initData != null && $scope.initData.length > 0) { // currently we have not yet handle the number types, TODO
                     var postBean = {};
-                    postBean.filterBy = $scope.selectedData;
+                    postBean.filterBy = $scope.initData;
                     if($scope.selectorId != null && $scope.selectorId !== '') {
                         if($scope.selectorId.toUpperCase().indexOf('MERCHANT') >= 0) {
                             postBean.DBObj = 'Merchant';
@@ -189,36 +189,36 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                                 // outputmodel must contain id and name, so when record is not contain id, should set it
                                 var i, len;
                                 if(attrs.buttonLabel !== 'id') {
-                                    if(typeof $scope.selectedData === 'object') {
-                                        for(i = 0, len = $scope.selectedData.length; i < len; i++) {
-                                            $scope.outputModel.push({
-                                                id: $scope.selectedData[i],
+                                    if(typeof $scope.initData === 'object') {
+                                        for(i = 0, len = $scope.initData.length; i < len; i++) {
+                                            $scope.outputData.push({
+                                                id: $scope.initData[i],
                                                 name: item[attrs.buttonLabel],
                                                 ticked: true
                                             });
                                             break;
                                         }
                                     } else {
-                                        $scope.outputModel.push({
-                                            id: $scope.selectedData,
+                                        $scope.outputData.push({
+                                            id: $scope.initData,
                                             name: item[attrs.buttonLabel],
                                             ticked: true
                                         });
                                     }
                                 } else if(attrs.buttonLabel !== 'name'){
-                                    if(typeof $scope.selectedData === 'object') {
-                                        for(i = 0, len = $scope.selectedData.length; i < len; i++) {
-                                            $scope.outputModel.push({
+                                    if(typeof $scope.initData === 'object') {
+                                        for(i = 0, len = $scope.initData.length; i < len; i++) {
+                                            $scope.outputData.push({
                                                 id: item[attrs.buttonLabel],
-                                                name: $scope.selectedData[i],
+                                                name: $scope.initData[i],
                                                 ticked: true
                                             });
                                             break;
                                         }
                                     } else {
-                                        $scope.outputModel.push({
+                                        $scope.outputData.push({
                                             id: item[attrs.buttonLabel],
-                                            name: $scope.selectedData,
+                                            name: $scope.initData,
                                             ticked: true
                                         });
                                     }
@@ -240,12 +240,12 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
 
             function tickDefault(model) {
                 if(typeof model !== 'undefined' && model.length > 0) {
-                    if (typeof $scope.outputModel !== 'undefined' && $scope.outputModel.length > 0) {
+                    if (typeof $scope.outputData !== 'undefined' && $scope.outputData.length > 0) {
                         model.forEach(function(input) {
-                            $scope.outputModel.forEach(function(output) {
+                            $scope.outputData.forEach(function(output) {
                                 if(input.id === output.id || input.name === output.name) {
                                     input.ticked = true;
-                                    $scope.refreshOutputModel();
+                                    $scope.refreshOutputData();
                                     $scope.refreshButton();
                                     return;
                                 }
@@ -700,7 +700,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                     }, 0);
                 }
 
-                $scope.refreshOutputModel();
+                $scope.refreshOutputData();
                 $scope.refreshButton();
 
                 // We update the index here
@@ -723,7 +723,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
             $scope.removeSelected = function(itemId, e) {
                 e.preventDefault();
                 e.stopPropagation();
-                if ($scope.outputModel.length === 0 || $scope.outputModel == null) {
+                if ($scope.outputData.length === 0 || $scope.outputData == null) {
                     return;
                 }
                 if (typeof itemId === 'undefined' || itemId === '') {
@@ -742,16 +742,16 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                         break;
                     }
                 }
-                $scope.refreshOutputModel();
-                if ($scope.outputModel.length === 0) {
+                $scope.refreshOutputData();
+                if ($scope.outputData.length === 0) {
                     $scope.refreshButton();
                 }
             };
 
-            // update $scope.outputModel
-            $scope.refreshOutputModel = function() {
+            // update $scope.outputData
+            $scope.refreshOutputData = function() {
 
-                $scope.outputModel = [];
+                $scope.outputData = [];
                 var
                     outputProps = [],
                     tempObj = {};
@@ -772,9 +772,9 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                                     tempObj[key1] = value1;
                                 }
                             });
-                            var index = $scope.outputModel.push(tempObj);
-                            delete $scope.outputModel[index - 1][$scope.indexProperty];
-                            delete $scope.outputModel[index - 1][$scope.spacingProperty];
+                            var index = $scope.outputData.push(tempObj);
+                            delete $scope.outputData[index - 1][$scope.indexProperty];
+                            delete $scope.outputData[index - 1][$scope.spacingProperty];
                         }
                     });
                 } else {
@@ -783,9 +783,9 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                             typeof value !== 'undefined' && typeof value[attrs.groupProperty] === 'undefined' && value[$scope.tickProperty] === true
                         ) {
                             var temp = angular.copy(value);
-                            var index = $scope.outputModel.push(temp);
-                            delete $scope.outputModel[index - 1][$scope.indexProperty];
-                            delete $scope.outputModel[index - 1][$scope.spacingProperty];
+                            var index = $scope.outputData.push(temp);
+                            delete $scope.outputData[index - 1][$scope.indexProperty];
+                            delete $scope.outputData[index - 1][$scope.spacingProperty];
                         }
                     });
                 }
@@ -797,7 +797,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                 var ctr = 0;
 
                 // refresh button label...
-                if (typeof $scope.outputModel === 'undefined' || $scope.outputModel.length === 0) {
+                if (typeof $scope.outputData === 'undefined' || $scope.outputData.length === 0) {
                     // https://github.com/isteven/angular-multi-select/pull/19                    
                     $scope.varButtonLabel = $scope.lang.nothingSelected;
                 } else {
@@ -807,13 +807,13 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                     }
 
                     // if max amount of labels displayed..
-                    if ($scope.outputModel.length > tempMaxLabels) {
+                    if ($scope.outputData.length > tempMaxLabels) {
                         $scope.more = true;
                     } else {
                         $scope.more = false;
                     }
                     //modified by sun
-                    angular.forEach($scope.outputModel, function(value, key) {
+                    angular.forEach($scope.outputData, function(value, key) {
                         if (typeof value !== 'undefined' && value[attrs.tickProperty] === true) {
                             if (ctr < tempMaxLabels) {
                                 $scope.varButtonLabel += ($scope.varButtonLabel.length > 0 ? '</div>, <div class="buttonLabel text-left">' : '<div class="buttonLabel  text-left">') + $scope.writeLabel(value, 'buttonLabel');
@@ -827,7 +827,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                         if (tempMaxLabels > 0) {
                             $scope.varButtonLabel += ', ... ';
                         }
-                        $scope.varButtonLabel += '等' + $scope.outputModel.length + '项&nbsp;&nbsp;&nbsp;';
+                        $scope.varButtonLabel += '等' + $scope.outputData.length + '项&nbsp;&nbsp;&nbsp;';
                     }
                 }
                 $scope.varButtonLabel = $sce.trustAsHtml($scope.varButtonLabel + '<span class="caret"></span>');
@@ -1007,7 +1007,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                                 }
                             }
                         });
-                        $scope.refreshOutputModel();
+                        $scope.refreshOutputData();
                         $scope.refreshButton();
                         $scope.onSelectAll();
                         break;
@@ -1019,7 +1019,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                                 }
                             }
                         });
-                        $scope.refreshOutputModel();
+                        $scope.refreshOutputData();
                         $scope.refreshButton();
                         $scope.onSelectNone();
                         break;
@@ -1030,7 +1030,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                                 value[$scope.tickProperty] = false;
                             }
                         });
-                        $scope.refreshOutputModel();
+                        $scope.refreshOutputData();
                         $scope.refreshButton();
                         $scope.onReset();
                         break;
@@ -1260,7 +1260,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
             // https://github.com/isteven/angular-multi-select/issues/8            
             /*$scope.$watch('inputModel', function(newVal) {
                 if (newVal) {
-                    $scope.refreshOutputModel();
+                    $scope.refreshOutputData();
                     $scope.refreshButton();
                 }
             }, true);*/
@@ -1273,7 +1273,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                     $scope.updateFilter();
                     $scope.prepareGrouping();
                     $scope.prepareIndex();
-                    // $scope.refreshOutputModel();
+                    // $scope.refreshOutputData();
                     // $scope.refreshButton();
                 }
             });
@@ -1284,13 +1284,13 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
             });
 
             // add by xjma
-            $scope.$watch("selectedData", function(oldVal, newVal) {
+            $scope.$watch("initData", function(oldVal, newVal) {
                 if (newVal !== oldVal) {
                     $scope.backUp = angular.copy($scope.inputModel);
                     $scope.updateFilter();
                     $scope.prepareGrouping();
                     $scope.prepareIndex();
-                    $scope.refreshOutputModel();
+                    $scope.refreshOutputData();
                     $scope.refreshButton();
                     $scope.init();
                 }
@@ -1369,7 +1369,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
         // '<button type="button" class="searchButton" ng-click="searchChanged()" >search</button> ' +
         '</div> ' +
         '<div class="line" style="position:relative">' +
-        '<span ng-repeat="item in outputModel">' +
+        '<span ng-repeat="item in outputData">' +
         '<button data-toggle="tooltip" data-placement="bottom" title="移除" ng-click="removeSelected(item.id, $event)" class="helperButton" ng-bind="\'x \'+item.name"></button>' +
         '</span>' +
         '</div>' +
