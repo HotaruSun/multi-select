@@ -42,6 +42,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
             // inputModel: '=',
             outputData: '=',
             initData: '=',
+            initUrl: '@',
             filterUrl: '@',
             otherFilterData: '=',
             selectorId: '@',
@@ -175,10 +176,15 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                             postBean.DBObj = 'User';
                         } else if($scope.selectorId.toUpperCase().indexOf('PURCHASEIN') >= 0) {
                             postBean.DBObj = 'PurchaseIn';
+                        } else if($scope.selectorId.toUpperCase().indexOf('PBMCATE') >= 0) { //pbmcategory
+                            postBean.DBObj = 'PbmCategory';
                         }
                     }
                     postBean.need = attrs.buttonLabel;
-                    $http.post('/admin/multiselector/setdefaultticked', postBean)
+                    if($scope.initUrl == null || $scope.initUrl === '') {
+                        $scope.initUrl = '/admin/multiselector/intitdata';
+                    }
+                    $http.post($scope.initUrl, postBean)
                     .success(function(data, status, headers, config) {
                         if (data.status === 'success') {
                             $scope.message = data.message;
@@ -187,16 +193,26 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                             }
                             data.data.filterRecord.forEach(function(item) {
                                 // outputmodel must contain id and name, so when record is not contain id, should set it
-                                var i, len;
+                                var i, j, len, outLen, isContained = false;
                                 if(attrs.buttonLabel !== 'id') {
                                     if(typeof $scope.initData === 'object') {
                                         for(i = 0, len = $scope.initData.length; i < len; i++) {
-                                            $scope.outputData.push({
+                                            if($scope.outputData && $scope.outputData.length > 0) {
+                                                for(j = 0, outLen = $scope.outputData.length; j < outLen; j++) {
+                                                    if($scope.outputData[j].id === $scope.initData[i]) {
+                                                        isContained = true;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                            var initBean = {
                                                 id: $scope.initData[i],
                                                 name: item[attrs.buttonLabel],
                                                 ticked: true
-                                            });
-                                            break;
+                                            };
+                                            if(!isContained) {
+                                                $scope.outputData.push(initBean);
+                                            }
                                         }
                                     } else {
                                         $scope.outputData.push({
@@ -205,7 +221,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                                             ticked: true
                                         });
                                     }
-                                } else if(attrs.buttonLabel !== 'name'){
+                                } else if(attrs.buttonLabel !== 'name') {
                                     if(typeof $scope.initData === 'object') {
                                         for(i = 0, len = $scope.initData.length; i < len; i++) {
                                             $scope.outputData.push({
@@ -213,7 +229,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                                                 name: $scope.initData[i],
                                                 ticked: true
                                             });
-                                            break;
+                                            // break;
                                         }
                                     } else {
                                         $scope.outputData.push({
@@ -245,12 +261,11 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                             $scope.outputData.forEach(function(output) {
                                 if(input.id === output.id || input.name === output.name) {
                                     input.ticked = true;
-                                    $scope.refreshOutputData();
-                                    $scope.refreshButton();
-                                    return;
                                 }
                             });
                         });
+                        $scope.refreshOutputData();
+                        $scope.refreshButton();
                     }
                 }
             }
@@ -1295,6 +1310,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                     $scope.init();
                 }
             });
+            $scope.init();
 
             // this is for touch enabled devices. We don't want to hide checkboxes on scroll. 
             var onTouchStart = function(e) {

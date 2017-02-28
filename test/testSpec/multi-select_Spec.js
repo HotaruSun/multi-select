@@ -2,8 +2,8 @@
  * - 配置项：
  *  1. selection-mode：插件的功能模式（single：单选，默认是多选），optional；单选：没有select-all, select-none按钮，只有reset按钮。
  *  2. filter-url：从server端获取数据的地址，mandatory；
- *  3. selected-data: 默认初始选中的数据；
- *  4. output-model：已选项存放的array，mandatory；
+ *  3. init-data: 默认初始选中的数据；
+ *  4. output-data：已选项存放的array，mandatory；
  *  5. button-label：在插件按钮上显示的选中项的字段，mandatory；
  *  6. item-label：下拉选项显示的字段，mandatory；
  *  7. tick-property：判断是否已选的标志；
@@ -12,10 +12,10 @@
  *  10. selector-id：防止页面多个插件导致loadmore功能或其他功能冲突，传入每个插件的id。
  *
  * - 操作：
- *  1. 页面load：当第一次进入页面时init一次，获取所有下面的数据，如果有配置selected-data，会有初始选中的选项，button label和插件上的label；
+ *  1. 页面load：当第一次进入页面时init一次，获取所有下面的数据，如果有配置init-data，会有初始选中的选项，button label和插件上的label；
  *  2. 第一次点击插件：再init一次，如果第一次init时，已有数据的话，不去调server端；（分开判断null和[]）
  *  3. 按钮点击：select-all；全选；select-none：全不选。reset：原来选上的还是会被选上，没选的还是去掉选择；
- *  4. 选择一个item：如果是多选，只是把已选的样式改掉，单选的话，窗口会关闭，按钮上的label也会相应的改变，outputmodel里面会存放已选的数据；
+ *  4. 选择一个item：如果是多选，只是把已选的样式改掉，单选的话，窗口会关闭，按钮上的label也会相应的改变，outputData里面会存放已选的数据；
  *     插件上面会有个已选项的label，点击会去掉选择状态；
  *  5. filter input：filter输入时，如果连续输入，则不会触发搜索功能，如果停止输入2s后，会去server端搜索。如果上次server端还没返回，这次搜索前，会把上次的调用停止，
  *  然后再去调用server端；输入框旁边的×，可以清楚框内的内容，然后过2s后，会自动再搜索一次；
@@ -24,34 +24,43 @@
  *     如果全部加载完了，或者这次加载没有20条，则不会再显示loadmore提示，也不会再触发加载功能；
  *  7. 和其他插件的联动加载：另外一个插件的已选项改变时，当前插件的下拉选项会自动做相应的修改，当前插件的已选项和button label也会自动清除。
  *
- * _ 特殊情景：
- *  1. 页面load完，验证inputmodel里的数据和post返回的是不是一样（是否有必要？以后会移除页面load时的init操作）；
- *  2. 页面load完，点击页面插件时，验证inputmodel里的数据和post返回的是不是一样；
- *  3. 验证多选模式下，选择一项后，页面和outputmodel的变化；
- *  4. 验证多选模式下，分别选择一项，两项，三项，四项后，页面和outputmodel的变化，最后验证去掉一项后的变化；
- *  5. 验证单选模式下，选择一项后，点击另外一项后的页面和数据变化，并验证重复点击同一项时的变化；
- *  6. 输入filter时，如果查询结果返回超时，继续输入其它内容，验证是否2s会再给服务器发送请求
- *  7. 输入filter时，如果查询结果还没返回的时候，取消输入的内容，再次输入其它内容，验证是否2s会再给服务器发送请求
- *  8. 输入filter时，如果查询结果返回超时，取消输入的内容，验证是否2s会再给服务器发送请求
- *  9. loadMore时，如果结果还没有返回时，继续loadMore，验证是否会给服务器端发送请求
- *  10. loadMore时，如果结果返回超时，继续loadMore，验证是否会给服务器端发送请求
- *  11. 和其他插件联动加载时，如果两个插件都有select-data ,验证当第一个插件已选项改变时，第二个插件的选项是否会跟随着改变，并验证重置后的值
+ * - test spec：
+ *  1. 页面load完，如果没有配置init-data，验证inputModel和outputData里是否有数据；
+ *  2. 页面load完，如果配置了init-data，验证inputModel和outputData里是否有数据；
+ *  3. 页面load完，点击页面插件时，验证inputmodel里的数据和post返回的是不是一样；
+ *  4. 验证多选模式下，选择一项后，页面和outputData的变化；
+ *  5. 验证多选模式下，分别选择一项，两项，三项，四项后，页面和outputData的变化，最后验证去掉一项后的变化；
+ *  6. 验证单选模式下，选择一项后，点击另外一项后的页面和数据变化，并验证重复点击同一项时的变化；
+ *  7. 验证多选模式下，选择一项后，点击另外一项后的页面和数据变化，并验证重复点击同一项时的变化；
+ *  8. 单选模式下，输入完搜索字段后，在2s内不会去搜索，2s后会返回搜索结果，点击选择一条搜索结果后，再点击另外条结果，删除搜索字段后2s会显示所有结果；
+ *  9. 多选模式下，输入完搜索字段后，在2s内不会去搜索，2s后会返回搜索结果，点击选择一条搜索结果后，再点击另外条结果，删除搜索字段后2s会显示所有结果；
+ *  10. loadMore时，如果结果还没有返回时，继续loadMore，验证是否会给服务器端发送请求
+ *  11. loadMore时，如果结果返回超时，继续loadMore，验证是否会给服务器端发送请求
+ *  12. 和其他插件联动加载时，如果两个插件都有select-data ,验证当第一个插件已选项改变时，第二个插件的选项是否会跟随着改变，并验证重置后的值
  **/
 describe('multi-selector unit test', function() {
-    var $scope, compile, $httpBackend, elem, template, test, $location, $anchorScroll;
+    var $scope, compile, $httpBackend, elem, template, test, $anchorScroll, $timeout;
     var inputModel;
     let getTest = function($injector, $compile, $rootScope) {
         compile = $compile;
         $scope = $rootScope.$new(true);
 
         $httpBackend = $injector.get('$httpBackend');
-        $location = $injector.get('$location');
         $anchorScroll = $injector.get('$anchorScroll');
+        $timeout = $injector.get('$timeout');
     };
 
     beforeEach(function() {
         module('isteven-multi-select');
         inject(getTest);
+    });
+
+    afterEach(function() {
+        $httpBackend.verifyNoOutstandingExpectation();
+        $httpBackend.verifyNoOutstandingRequest();
+    });
+
+    it('#1 inputModel and outputData should be empty before click the selector when initData is not setted', function() {
         $httpBackend.expect('POST', '/multiselector/test/').respond({
             status: "success",
             message: false,
@@ -64,23 +73,21 @@ describe('multi-selector unit test', function() {
                 ]
             }
         });
-    });
-
-    afterEach(function() {
-        $httpBackend.verifyNoOutstandingExpectation();
-        $httpBackend.verifyNoOutstandingRequest();
-    });
-
-    xit('#1_inputmodel should be equal the post response after page finish loading', function() {
-        template = angular.element('<div isteven-multi-select output-model="selectedTestIds" filter-url="/multiselector/test/" item-label="name" button-label="name" selector-id="testSelector">');
+        template = angular.element('<div isteven-multi-select output-data="selectedTestIds" filter-url="/multiselector/test/" item-label="name" button-label="name" selector-id="testSelector">');
         elem = compile(template)($scope);
         $scope.$digest();
         $scope.selectedTestIds = [];
         expect(angular.element(elem[0]).attr('filter-url')).to.equal($scope.$$childTail.filterUrl);
         let selectorId = angular.element(elem[0]).attr('selector-id');
         expect(selectorId).to.equal($scope.$$childTail.selectorId);
+        // inputModel is empty before click the selector
+        expect($scope.$$childTail.inputModel.length).to.equal(0);
+        expect(typeof($scope.$$childTail.outputData)).to.equal('undefined');
 
+        let initButton = angular.element(elem.find('button')[0]);
+        initButton.triggerHandler('click');
         $httpBackend.flush();
+        expect($scope.$$childTail.outputData.length).to.equal(0);
 
         // check the inputmodel
         inputModel = $scope.$$childTail.inputModel;
@@ -94,8 +101,111 @@ describe('multi-selector unit test', function() {
         expect(inputModel[3].name).to.equal('浦东');
     });
 
-    it('#2_inputmodel should be equal the post response after clicking the selector', function() {
-        template = angular.element('<div isteven-multi-select output-model="selectedTestIds" filter-url="/multiselector/test/" item-label="name" button-label="name" selector-id="testSelector">');
+    it('#2 inputModel should be empty and ouputData is not empty before click the selector when initData is setted', function() {
+        $httpBackend.expect('POST', '/admin/multiselector/intitdata').respond({
+            status: "success",
+            message: false,
+            data: {
+                filterRecord: [
+                    { id: '1', name: '松江' },
+                    { id: '2', name: '徐汇' }
+                ]
+            }
+        });
+        $scope.testInitData = ['1', '2'];
+        template = angular.element('<div isteven-multi-select output-data="selectedTestIds" filter-url="/multiselector/test/" item-label="name" button-label="name" selector-id="testSelector" init-data="testInitData">');
+        elem = compile(template)($scope);
+        $scope.$digest();
+        $scope.selectedTestIds = [];
+        expect(angular.element(elem[0]).attr('filter-url')).to.equal($scope.$$childTail.filterUrl);
+        let selectorId = angular.element(elem[0]).attr('selector-id');
+        expect(selectorId).to.equal($scope.$$childTail.selectorId);
+        $httpBackend.flush();
+        // inputModel is empty before click the selector
+        expect($scope.$$childTail.inputModel.length).to.equal(0);
+        expect($scope.$$childTail.outputData.length).to.equal(2);
+        $scope.$$childTail.outputData[0].id = '1';
+        $scope.$$childTail.outputData[0].name = '松江';
+        $scope.$$childTail.outputData[1].id = '2';
+        $scope.$$childTail.outputData[0].name = '徐汇';
+        // check the button label
+        let initButton = angular.element(elem.find('button')[0]);
+        expect(initButton.text()).to.contain('松江, ... 等2项');
+        expect(initButton.text()).not.to.contain('闵行');
+        expect(initButton.text()).not.to.contain('浦东');
+
+        $httpBackend.expect('POST', '/multiselector/test/').respond({
+            status: "success",
+            message: false,
+            data: {
+                filterRecord: [
+                    { id: '1', name: '松江' },
+                    { id: '2', name: '徐汇' },
+                    { id: '3', name: '闵行' },
+                    { id: '4', name: '浦东' }
+                ]
+            }
+        });
+        initButton.triggerHandler('click');
+        $httpBackend.flush();
+
+        // check the inputmodel
+        inputModel = $scope.$$childTail.inputModel;
+        expect(inputModel[0].id).to.equal('1');
+        expect(inputModel[1].id).to.equal('2');
+        expect(inputModel[2].id).to.equal('3');
+        expect(inputModel[3].id).to.equal('4');
+        expect(inputModel[0].name).to.equal('松江');
+        expect(inputModel[1].name).to.equal('徐汇');
+        expect(inputModel[2].name).to.equal('闵行');
+        expect(inputModel[3].name).to.equal('浦东');
+        let sjItem = elem.find('div').children().eq(2).children().eq(0);
+        let xhItem = elem.find('div').children().eq(2).children().eq(1);
+        let mhItem = elem.find('div').children().eq(2).children().eq(2);
+        let pdItem = elem.find('div').children().eq(2).children().eq(3);
+        // click '松江'
+        angular.element(sjItem).triggerHandler('click');
+        // check the ticked item in inputmodel
+        expect(inputModel[0].ticked).not.to.equal(true);
+        expect(inputModel[1].ticked).to.equal(true);
+        expect(inputModel[2].ticked).not.to.equal(true);
+        expect(inputModel[3].ticked).not.to.equal(true);
+        // check the button label
+        expect(initButton.text()).not.to.contain('松江');
+        expect(initButton.text()).to.contain('徐汇');
+        expect(initButton.text()).not.to.contain('闵行');
+        expect(initButton.text()).not.to.contain('浦东');
+        // check the outputData
+        var outputData = $scope.$$childTail.outputData;
+        expect(outputData.length).to.equal(1);
+        expect(outputData[0].id).to.equal('2');
+        expect(outputData[0].name).to.equal('徐汇');
+        // check the page attributes
+        expect(xhItem.attr('class')).to.contain('selected');
+        expect(xhItem.find('input').attr('checked')).to.equal('checked');
+        expect(typeof xhItem.find('span')).not.to.equal('undefined');
+        // check the title
+        let titleButtons = elem.find('div').eq(1).children('div').eq(0).children('div').eq(2).children();
+        expect(titleButtons.length).to.equal(1);
+        expect(titleButtons.eq(0).text()).to.equal('x 徐汇');
+
+        delete $scope.testInitData;
+    });
+
+    it('#3 inputmodel should be equal the post response after clicking the selector', function() {
+        $httpBackend.expect('POST', '/multiselector/test/').respond({
+            status: "success",
+            message: false,
+            data: {
+                filterRecord: [
+                    { id: '1', name: '松江' },
+                    { id: '2', name: '徐汇' },
+                    { id: '3', name: '闵行' },
+                    { id: '4', name: '浦东' }
+                ]
+            }
+        });
+        template = angular.element('<div isteven-multi-select output-data="selectedTestIds" filter-url="/multiselector/test/" item-label="name" button-label="name" selector-id="testSelector">');
         elem = compile(template)($scope);
         $scope.$digest();
         $scope.selectedTestIds = [];
@@ -118,8 +228,20 @@ describe('multi-selector unit test', function() {
         expect(inputModel[3].name).to.equal('浦东');
     });
 
-    it('#3_it should no items ticked default when selected-data is empty, then click one item in multi mode', function() {
-        template = angular.element('<div isteven-multi-select output-model="selectedTestIds" filter-url="/multiselector/test/" item-label="name" button-label="name" selector-id="testSelector">');
+    it('#4 it should no items ticked default when init-data is empty, then click one item in multi mode', function() {
+        $httpBackend.expect('POST', '/multiselector/test/').respond({
+            status: "success",
+            message: false,
+            data: {
+                filterRecord: [
+                    { id: '1', name: '松江' },
+                    { id: '2', name: '徐汇' },
+                    { id: '3', name: '闵行' },
+                    { id: '4', name: '浦东' }
+                ]
+            }
+        });
+        template = angular.element('<div isteven-multi-select output-data="selectedTestIds" filter-url="/multiselector/test/" item-label="name" button-label="name" selector-id="testSelector">');
         elem = compile(template)($scope);
         $scope.$digest();
         $scope.selectedTestIds = [];
@@ -149,10 +271,10 @@ describe('multi-selector unit test', function() {
         // check the button label
         expect(elem.find('button').children().text()).to.contain('松江');
 
-        // check the outputmodel
-        expect($scope.$$childTail.outputModel.length).to.equal(1);
-        expect($scope.$$childTail.outputModel[0].id).to.equal('1');
-        expect($scope.$$childTail.outputModel[0].name).to.equal('松江');
+        // check the outputData
+        expect($scope.$$childTail.outputData.length).to.equal(1);
+        expect($scope.$$childTail.outputData[0].id).to.equal('1');
+        expect($scope.$$childTail.outputData[0].name).to.equal('松江');
 
         // check the title
         let titleButtons = elem.find('div').eq(1).children('div').eq(0).children('div').eq(2).children();
@@ -160,8 +282,20 @@ describe('multi-selector unit test', function() {
         expect(titleButtons.eq(0).text()).to.equal('x 松江');
     });
 
-    it('#4_it should no items ticked default when selected-data is empty, then click some items in multi model', function() {
-        template = angular.element('<div isteven-multi-select output-model="selectedTestIds" filter-url="/multiselector/test/" item-label="name" button-label="name" selector-id="testSelector">');
+    it('#5 it should no items ticked default when init-data is empty, then click some items in multi model', function() {
+        $httpBackend.expect('POST', '/multiselector/test/').respond({
+            status: "success",
+            message: false,
+            data: {
+                filterRecord: [
+                    { id: '1', name: '松江' },
+                    { id: '2', name: '徐汇' },
+                    { id: '3', name: '闵行' },
+                    { id: '4', name: '浦东' }
+                ]
+            }
+        });
+        template = angular.element('<div isteven-multi-select output-data="selectedTestIds" filter-url="/multiselector/test/" item-label="name" button-label="name" selector-id="testSelector">');
         elem = compile(template)($scope);
         $scope.$digest();
         $scope.selectedTestIds = [];
@@ -200,11 +334,11 @@ describe('multi-selector unit test', function() {
         expect(initButton.text()).not.to.contain('徐汇');
         expect(initButton.text()).not.to.contain('闵行');
         expect(initButton.text()).not.to.contain('浦东');
-        // check the outputmodel
-        var outputModel = $scope.$$childTail.outputModel;
-        expect(outputModel.length).to.equal(1);
-        expect(outputModel[0].id).to.equal('1');
-        expect(outputModel[0].name).to.equal('松江');
+        // check the outputData
+        var outputData = $scope.$$childTail.outputData;
+        expect(outputData.length).to.equal(1);
+        expect(outputData[0].id).to.equal('1');
+        expect(outputData[0].name).to.equal('松江');
         // check the page attributes
         expect(sjItem.attr('class')).to.contain('selected');
         expect(sjItem.find('input').attr('checked')).to.equal('checked');
@@ -225,13 +359,13 @@ describe('multi-selector unit test', function() {
         expect(initButton.text()).to.contain('松江, ... 等2项');
         expect(initButton.text()).not.to.contain('闵行');
         expect(initButton.text()).not.to.contain('浦东');
-        // check the outputmodel
-        outputModel = $scope.$$childTail.outputModel;
-        expect(outputModel.length).to.equal(2);
-        expect(outputModel[0].id).to.equal('1');
-        expect(outputModel[0].name).to.equal('松江');
-        expect(outputModel[1].id).to.equal('2');
-        expect(outputModel[1].name).to.equal('徐汇');
+        // check the outputData
+        outputData = $scope.$$childTail.outputData;
+        expect(outputData.length).to.equal(2);
+        expect(outputData[0].id).to.equal('1');
+        expect(outputData[0].name).to.equal('松江');
+        expect(outputData[1].id).to.equal('2');
+        expect(outputData[1].name).to.equal('徐汇');
         // check the page attributes
         expect(sjItem.attr('class')).to.contain('selected');
         expect(sjItem.find('input').attr('checked')).to.equal('checked');
@@ -256,15 +390,15 @@ describe('multi-selector unit test', function() {
         // check ther button label
         expect(initButton.text()).to.contain('松江, ... 等3项');
         expect(initButton.text()).not.to.contain('浦东');
-        // check the outputmodel
-        outputModel = $scope.$$childTail.outputModel;
-        expect(outputModel.length).to.equal(3);
-        expect(outputModel[0].id).to.equal('1');
-        expect(outputModel[0].name).to.equal('松江');
-        expect(outputModel[1].id).to.equal('2');
-        expect(outputModel[1].name).to.equal('徐汇');
-        expect(outputModel[2].id).to.equal('3');
-        expect(outputModel[2].name).to.equal('闵行');
+        // check the outputData
+        outputData = $scope.$$childTail.outputData;
+        expect(outputData.length).to.equal(3);
+        expect(outputData[0].id).to.equal('1');
+        expect(outputData[0].name).to.equal('松江');
+        expect(outputData[1].id).to.equal('2');
+        expect(outputData[1].name).to.equal('徐汇');
+        expect(outputData[2].id).to.equal('3');
+        expect(outputData[2].name).to.equal('闵行');
         // check the page attributes
         expect(sjItem.attr('class')).to.contain('selected');
         expect(sjItem.find('input').attr('checked')).to.equal('checked');
@@ -291,17 +425,17 @@ describe('multi-selector unit test', function() {
         expect(inputModel[3].ticked).to.equal(true);
         // check ther button label
         expect(initButton.text()).to.contain('松江, ... 等4项');
-        // check the outputmodel
-        outputModel = $scope.$$childTail.outputModel;
-        expect(outputModel.length).to.equal(4);
-        expect(outputModel[0].id).to.equal('1');
-        expect(outputModel[0].name).to.equal('松江');
-        expect(outputModel[1].id).to.equal('2');
-        expect(outputModel[1].name).to.equal('徐汇');
-        expect(outputModel[2].id).to.equal('3');
-        expect(outputModel[2].name).to.equal('闵行');
-        expect(outputModel[3].id).to.equal('4');
-        expect(outputModel[3].name).to.equal('浦东');
+        // check the outputData
+        outputData = $scope.$$childTail.outputData;
+        expect(outputData.length).to.equal(4);
+        expect(outputData[0].id).to.equal('1');
+        expect(outputData[0].name).to.equal('松江');
+        expect(outputData[1].id).to.equal('2');
+        expect(outputData[1].name).to.equal('徐汇');
+        expect(outputData[2].id).to.equal('3');
+        expect(outputData[2].name).to.equal('闵行');
+        expect(outputData[3].id).to.equal('4');
+        expect(outputData[3].name).to.equal('浦东');
         // check the page attributes
         expect(sjItem.attr('class')).to.contain('selected');
         expect(sjItem.find('input').attr('checked')).to.equal('checked');
@@ -332,15 +466,15 @@ describe('multi-selector unit test', function() {
         expect(inputModel[3].ticked).to.equal(false);
         // check ther button label
         expect(initButton.text()).to.contain('松江, ... 等3项');
-        // check the outputmodel
-        outputModel = $scope.$$childTail.outputModel;
-        expect(outputModel.length).to.equal(3);
-        expect(outputModel[0].id).to.equal('1');
-        expect(outputModel[0].name).to.equal('松江');
-        expect(outputModel[1].id).to.equal('2');
-        expect(outputModel[1].name).to.equal('徐汇');
-        expect(outputModel[2].id).to.equal('3');
-        expect(outputModel[2].name).to.equal('闵行');
+        // check the outputData
+        outputData = $scope.$$childTail.outputData;
+        expect(outputData.length).to.equal(3);
+        expect(outputData[0].id).to.equal('1');
+        expect(outputData[0].name).to.equal('松江');
+        expect(outputData[1].id).to.equal('2');
+        expect(outputData[1].name).to.equal('徐汇');
+        expect(outputData[2].id).to.equal('3');
+        expect(outputData[2].name).to.equal('闵行');
         // check the page attributes
         expect(sjItem.attr('class')).to.contain('selected');
         expect(sjItem.find('input').attr('checked')).to.equal('checked');
@@ -361,14 +495,25 @@ describe('multi-selector unit test', function() {
         expect(titleButtons.eq(2).text()).to.equal('x 闵行');
     });
 
-    it('#5_it should ticket other item after click other item when one time is ticketed in single mode', function() {
-        template = angular.element('<div isteven-multi-select output-model="selectedTestIds" filter-url="/multiselector/test/" item-label="name" button-label="name" selector-id="testSelector" selection-mode="single">');
+    it('#6 it should tick other item after click other item when one time is ticked in single mode', function() {
+        $httpBackend.expect('POST', '/multiselector/test/').respond({
+            status: "success",
+            message: false,
+            data: {
+                filterRecord: [
+                    { id: '1', name: '松江' },
+                    { id: '2', name: '徐汇' },
+                    { id: '3', name: '闵行' },
+                    { id: '4', name: '浦东' }
+                ]
+            }
+        });
+        template = angular.element('<div isteven-multi-select output-data="selectedTestIds" filter-url="/multiselector/test/" item-label="name" button-label="name" selector-id="testSelector" selection-mode="single">');
         elem = compile(template)($scope);
         $scope.$digest();
         $scope.selectedTestIds = [];
         expect(elem.attr('filter-url')).to.equal($scope.$$childTail.filterUrl);
         expect(elem.attr('selector-id')).to.equal($scope.$$childTail.selectorId);
-        // expect(elem.attr('selection-mode')).to.equal($scope.$$childTail.selectionMode);
         let initButton = angular.element(elem.find('button')[0]);
         initButton.triggerHandler('click');
         $httpBackend.flush();
@@ -398,11 +543,11 @@ describe('multi-selector unit test', function() {
         expect(inputModel[3].ticked).to.equal(false);
         // check ther button label
         expect(initButton.text()).to.contain('松江');
-        // check the outputmodel
-        outputModel = $scope.$$childTail.outputModel;
-        expect(outputModel.length).to.equal(1);
-        expect(outputModel[0].id).to.equal('1');
-        expect(outputModel[0].name).to.equal('松江');
+        // check the outputData
+        var outputData = $scope.$$childTail.outputData;
+        expect(outputData.length).to.equal(1);
+        expect(outputData[0].id).to.equal('1');
+        expect(outputData[0].name).to.equal('松江');
         // check the page attributes
         expect(sjItem.attr('class')).to.contain('selected');
         expect(sjItem.find('input').attr('checked')).to.equal('checked');
@@ -414,7 +559,7 @@ describe('multi-selector unit test', function() {
         expect(pdItem.attr('class')).not.to.contain('selected');
         expect(typeof pdItem.find('input').attr('checked')).to.equal('undefined');
         // check the title
-        titleButtons = elem.find('div').eq(1).children('div').eq(0).children('div').eq(2).children();
+        var titleButtons = elem.find('div').eq(1).children('div').eq(0).children('div').eq(2).children();
         expect(titleButtons.length).to.equal(1);
         expect(titleButtons.eq(0).text()).to.equal('x 松江');
 
@@ -428,11 +573,11 @@ describe('multi-selector unit test', function() {
         expect(inputModel[3].ticked).to.equal(false);
         // check ther button label
         expect(initButton.text()).to.contain('徐汇');
-        // check the outputmodel
-        outputModel = $scope.$$childTail.outputModel;
-        expect(outputModel.length).to.equal(1);
-        expect(outputModel[0].id).to.equal('2');
-        expect(outputModel[0].name).to.equal('徐汇');
+        // check the outputData
+        outputData = $scope.$$childTail.outputData;
+        expect(outputData.length).to.equal(1);
+        expect(outputData[0].id).to.equal('2');
+        expect(outputData[0].name).to.equal('徐汇');
         // check the page attributes
         expect(sjItem.attr('class')).not.to.contain('selected');
         expect(typeof sjItem.find('input').attr('checked')).to.equal('undefined');
@@ -457,11 +602,11 @@ describe('multi-selector unit test', function() {
         expect(inputModel[3].ticked).to.equal(false);
         // check ther button label
         expect(initButton.text()).to.contain('徐汇');
-        // check the outputmodel
-        outputModel = $scope.$$childTail.outputModel;
-        expect(outputModel.length).to.equal(1);
-        expect(outputModel[0].id).to.equal('2');
-        expect(outputModel[0].name).to.equal('徐汇');
+        // check the outputData
+        outputData = $scope.$$childTail.outputData;
+        expect(outputData.length).to.equal(1);
+        expect(outputData[0].id).to.equal('2');
+        expect(outputData[0].name).to.equal('徐汇');
         // check the page attributes
         expect(sjItem.attr('class')).not.to.contain('selected');
         expect(typeof sjItem.find('input').attr('checked')).to.equal('undefined');
@@ -478,15 +623,183 @@ describe('multi-selector unit test', function() {
         expect(titleButtons.eq(0).text()).to.equal('x 徐汇');
     });
 
-    it('#6_', function() {});
+    it('#7 it should tick both items after click other item when one time is ticked in multi mode', function() {
+        $httpBackend.expect('POST', '/multiselector/test/').respond({
+            status: "success",
+            message: false,
+            data: {
+                filterRecord: [
+                    { id: '1', name: '松江' },
+                    { id: '2', name: '徐汇' },
+                    { id: '3', name: '闵行' },
+                    { id: '4', name: '浦东' }
+                ]
+            }
+        });
+        template = angular.element('<div isteven-multi-select output-data="selectedTestIds" filter-url="/multiselector/test/" item-label="name" button-label="name" selector-id="testSelector">');
+        elem = compile(template)($scope);
+        $scope.$digest();
+        $scope.selectedTestIds = [];
+        expect(elem.attr('filter-url')).to.equal($scope.$$childTail.filterUrl);
+        expect(elem.attr('selector-id')).to.equal($scope.$$childTail.selectorId);
+        let initButton = angular.element(elem.find('button')[0]);
+        initButton.triggerHandler('click');
+        $httpBackend.flush();
 
-    it('#7_', function() {});
+        inputModel = $scope.$$childTail.inputModel;
+        expect(inputModel[0].id).to.equal('1');
+        expect(inputModel[1].id).to.equal('2');
+        expect(inputModel[2].id).to.equal('3');
+        expect(inputModel[3].id).to.equal('4');
+        expect(inputModel[0].name).to.equal('松江');
+        expect(inputModel[1].name).to.equal('徐汇');
+        expect(inputModel[2].name).to.equal('闵行');
+        expect(inputModel[3].name).to.equal('浦东');
 
-    it('#8_', function() {});
+        let sjItem = elem.find('div').children().eq(1).children().eq(0);
+        let xhItem = elem.find('div').children().eq(1).children().eq(1);
+        let mhItem = elem.find('div').children().eq(1).children().eq(2);
+        let pdItem = elem.find('div').children().eq(1).children().eq(3);
 
-    it('#9_', function() {});
+        /* click '松江' */
+        // first tick one item
+        sjItem.triggerHandler('click');
+        // check the ticked item in inputmodel
+        expect(inputModel[0].ticked).to.equal(true);
+        expect(typeof(inputModel[1].ticked)).to.equal('undefined');
+        expect(typeof(inputModel[2].ticked)).to.equal('undefined');
+        expect(typeof(inputModel[3].ticked)).to.equal('undefined');
+        // check ther button label
+        expect(initButton.text()).to.contain('松江');
+        // check the outputData
+        var outputData = $scope.$$childTail.outputData;
+        expect(outputData.length).to.equal(1);
+        expect(outputData[0].id).to.equal('1');
+        expect(outputData[0].name).to.equal('松江');
+        // check the page attributes
+        expect(sjItem.attr('class')).to.contain('selected');
+        expect(sjItem.find('input').attr('checked')).to.equal('checked');
+        expect(typeof sjItem.find('span')).not.to.equal('undefined');
+        expect(xhItem.attr('class')).not.to.contain('selected');
+        expect(typeof xhItem.find('input').attr('checked')).to.equal('undefined');
+        expect(mhItem.attr('class')).not.to.contain('selected');
+        expect(typeof mhItem.find('input').attr('checked')).to.equal('undefined');
+        expect(pdItem.attr('class')).not.to.contain('selected');
+        expect(typeof pdItem.find('input').attr('checked')).to.equal('undefined');
+        // check the title
+        var titleButtons = elem.find('div').eq(1).children('div').eq(0).children('div').eq(2).children();
+        expect(titleButtons.length).to.equal(1);
+        expect(titleButtons.eq(0).text()).to.equal('x 松江');
 
-    it('#10_', function() {});
+        // then click other item
+        /* click '徐汇' */
+        xhItem.triggerHandler('click');
+         // check the ticked item in inputmodel
+        expect(inputModel[0].ticked).to.equal(true);
+        expect(inputModel[1].ticked).to.equal(true);
+        expect(typeof(inputModel[2].ticked)).to.equal('undefined');
+        expect(typeof(inputModel[3].ticked)).to.equal('undefined');
+        // check ther button label
+        expect(initButton.text()).to.contain('松江, ... 等2项');
+        // check the outputData
+        outputData = $scope.$$childTail.outputData;
+        expect(outputData.length).to.equal(2);
+        expect(outputData[0].id).to.equal('1');
+        expect(outputData[0].name).to.equal('松江');
+        expect(outputData[1].id).to.equal('2');
+        expect(outputData[1].name).to.equal('徐汇');
+        // check the page attributes
+        expect(sjItem.attr('class')).to.contain('selected');
+        expect(sjItem.find('input').attr('checked')).to.equal('checked');
+        expect(typeof sjItem.find('span')).not.to.equal('undefined');
+        expect(xhItem.attr('class')).to.contain('selected');
+        expect(xhItem.find('input').attr('checked')).to.equal('checked');
+        expect(typeof xhItem.find('span')).not.to.equal('undefined');
+        expect(mhItem.attr('class')).not.to.contain('selected');
+        expect(typeof mhItem.find('input').attr('checked')).to.equal('undefined');
+        expect(pdItem.attr('class')).not.to.contain('selected');
+        expect(typeof pdItem.find('input').attr('checked')).to.equal('undefined');
+        // check the title
+        titleButtons = elem.find('div').eq(1).children('div').eq(0).children('div').eq(2).children();
+        expect(titleButtons.length).to.equal(2);
+        expect(titleButtons.eq(0).text()).to.equal('x 松江');
+        expect(titleButtons.eq(1).text()).to.equal('x 徐汇');
+    });
+
+    it('#8 it should tick one item when clicking two filtered items filtered after 2s in single mode', function() {
+        template = angular.element('<div isteven-multi-select output-data="selectedTestIds" filter-url="/multiselector/test/" item-label="name" button-label="name" selector-id="testSelector">');
+        elem = compile(template)($scope);
+        $scope.$digest();
+        $scope.selectedTestIds = [];
+        expect(elem.attr('filter-url')).to.equal($scope.$$childTail.filterUrl);
+        expect(elem.attr('selector-id')).to.equal($scope.$$childTail.selectorId);
+        $httpBackend.expect('POST', '/multiselector/test/').respond({
+            if($scope.$$childTail.bean.flag === 'init') {
+                status: "success",
+                message: false,
+                data: {
+                    filterRecord: [
+                        { id: '1', name: '松江1' },
+                        { id: '2', name: '松江2' },
+                        { id: '3', name: '闵行' },
+                        { id: '4', name: '浦东' }
+                    ]
+                }
+            } else if($scope.$$childTail.bean.flag === 'filter') {
+                status: "success",
+                message: false,
+                data: {
+                    filterRecord: [
+                        { id: '1', name: '松江1' },
+                        { id: '2', name: '松江2' }
+                    ]
+                }
+            }
+        });
+        let initButton = angular.element(elem.find('button')[0]);
+        initButton.triggerHandler('click');
+        $httpBackend.flush();
+
+        inputModel = $scope.$$childTail.inputModel;
+        expect(inputModel[0].id).to.equal('1');
+        expect(inputModel[1].id).to.equal('2');
+        expect(inputModel[2].id).to.equal('3');
+        expect(inputModel[3].id).to.equal('4');
+        expect(inputModel[0].name).to.equal('松江1');
+        expect(inputModel[1].name).to.equal('松江2');
+        expect(inputModel[2].name).to.equal('闵行');
+        expect(inputModel[3].name).to.equal('浦东');
+
+        let sjItem = elem.find('div').children().eq(1).children().eq(0);
+        let xhItem = elem.find('div').children().eq(1).children().eq(1);
+        let mhItem = elem.find('div').children().eq(1).children().eq(2);
+        let pdItem = elem.find('div').children().eq(1).children().eq(3);
+
+        elem.find('input').val('松江');
+        elem.find('input').triggerHandler('change');
+        // $timeout.flush(2000); // sleep 2s to wait filter
+        // $httpBackend.expect('POST', '/multiselector/test/').respond({
+        //     status: "success",
+        //     message: false,
+        //     data: {
+        //         filterRecord: [
+        //             { id: '1', name: '松江1' },
+        //             { id: '2', name: '松江2' }
+        //         ]
+        //     }
+        // });
+        $httpBackend.flush();
+        console.log($scope.$$childTail.bean);
+        console.log($scope.$$childTail.filteredModel);
+    });
+
+    xit('#9 it should tick two items when clicking two filtered items filtered after 2s in multi mode', function() {
+
+    });
+
+    xit('#9_', function() {});
+
+    xit('#10_', function() {});
 
     xit('test first button for single selection', function() {
         $httpBackend.when('POST', '/test/').respond({
@@ -501,7 +814,7 @@ describe('multi-selector unit test', function() {
             }
         });
 
-        elem = angular.element('<div isteven-multi-select selection-mode="single" filter-url="/test/" button-label="name" item-label="name" output-model="selectedTests"></div>');
+        elem = angular.element('<div isteven-multi-select selection-mode="single" filter-url="/test/" button-label="name" item-label="name" output-data="selectedTests"></div>');
         template = compile(elem)($scope);
         $scope.$digest();
         let initButton = angular.element(elem.find('button')[0]);
@@ -550,7 +863,7 @@ describe('multi-selector unit test', function() {
             }
         });
 
-        elem = angular.element('<div isteven-multi-select selection-mode="single" filter-url="/test/" output-model="selectedTests" button-label="name" item-label="name" tick-property="ticked" selected-data="testData"></div>');
+        elem = angular.element('<div isteven-multi-select selection-mode="single" filter-url="/test/" output-data="selectedTests" button-label="name" item-label="name" tick-property="ticked" init-data="testData"></div>');
         template = compile(elem)($scope);
         $scope.$digest();
         let initButton = angular.element(elem.find('button')[0]);
@@ -598,7 +911,7 @@ describe('multi-selector unit test', function() {
             }
         });
 
-        elem = angular.element('<div isteven-multi-select filter-url="/test/" output-model="selectedTests" button-label="name" item-label="name" tick-property="ticked" selected-data="testData"></div>');
+        elem = angular.element('<div isteven-multi-select filter-url="/test/" output-data="selectedTests" button-label="name" item-label="name" tick-property="ticked" init-data="testData"></div>');
         template = compile(elem)($scope);
         $scope.$digest();
 
@@ -612,7 +925,7 @@ describe('multi-selector unit test', function() {
         let firstTestSpan = template.find('div').children('div').children('div').next().next().children('span');
         //点击事件生效时页面上每个应该被选中的div的属性变化
         for (var i = 0; i < 3; i++) {
-            expect(firstTestSpan.attr('ng-repeat')).to.equal('item in outputModel');
+            expect(firstTestSpan.attr('ng-repeat')).to.equal('item in outputData');
             expect(firstTestSpan.attr('class')).to.equal('ng-scope');
             expect(firstTestSpan.find('button').attr('data-toggle')).to.equal('tooltip');
             expect(firstTestSpan.find('button').attr('data-placement')).to.equal('bottom');
@@ -639,7 +952,7 @@ describe('multi-selector unit test', function() {
             }
         });
 
-        elem = angular.element('<div isteven-multi-select filter-url="/test/" input-model="ss" output-model="selectedTests" button-label="name" item-label="name" tick-property="ticked" selected-data="testData"></div>');
+        elem = angular.element('<div isteven-multi-select filter-url="/test/" input-model="ss" output-data="selectedTests" button-label="name" item-label="name" tick-property="ticked" init-data="testData"></div>');
         template = compile(elem)($scope);
         $scope.$digest();
         let initButton = angular.element(elem.find('button')[0]);
@@ -712,7 +1025,7 @@ describe('multi-selector unit test', function() {
             }
         });
 
-        elem = angular.element('<div isteven-multi-select filter-url="/test/" output-model="selectedTests" button-label="name" item-label="name" tick-property="ticked" selected-data="testData"></div>');
+        elem = angular.element('<div isteven-multi-select filter-url="/test/" output-data="selectedTests" button-label="name" item-label="name" tick-property="ticked" init-data="testData"></div>');
         template = compile(elem)($scope);
         $scope.$digest();
         let initButton = angular.element(elem.find('button')[0]);
@@ -758,7 +1071,7 @@ describe('multi-selector unit test', function() {
             return [200, datas];
         });
 
-        elem = angular.element('<div isteven-multi-select filter-url="/test/" output-model="selectedTests" button-label="name" item-label="name" tick-property="ticked" selected-data="testData" selector-id="selectedTest"></div>');
+        elem = angular.element('<div isteven-multi-select filter-url="/test/" output-data="selectedTests" button-label="name" item-label="name" tick-property="ticked" init-data="testData" selector-id="selectedTest"></div>');
         template = compile(elem)($scope);
         $scope.$digest();
 
@@ -826,7 +1139,7 @@ describe('multi-selector unit test', function() {
             }
         });
 
-        elem = angular.element('<div isteven-multi-select filter-url="/test/" output-model="selectedTests" button-label="name" item-label="name" tick-property="ticked" selected-data="testData"></div>');
+        elem = angular.element('<div isteven-multi-select filter-url="/test/" output-data="selectedTests" button-label="name" item-label="name" tick-property="ticked" init-data="testData"></div>');
         template = compile(elem)($scope);
         $scope.$digest();
         let initButton = angular.element(elem.find('button')[0]);
@@ -861,7 +1174,7 @@ describe('multi-selector unit test', function() {
             }
         });
         let elem = angular.element('<button class="form-control pull-left ng-binding" />');
-        elem = angular.element('<div isteven-multi-select selection-mode="single" filter-url="/test/" output-model="selectedTests" button-label="name" item-label="name" tick-property="ticked" selected-data="testData"></div>');
+        elem = angular.element('<div isteven-multi-select selection-mode="single" filter-url="/test/" output-data="selectedTests" button-label="name" item-label="name" tick-property="ticked" init-data="testData"></div>');
         template = compile(elem)($scope);
         $scope.$digest();
 
@@ -895,7 +1208,7 @@ describe('multi-selector unit test', function() {
             }
         });
         let elem = angular.element('<button class="form-control pull-left ng-binding" />');
-        elem = angular.element('<div isteven-multi-select filter-url="/test/" output-model="selectedTests" button-label="name" item-label="name" tick-property="ticked" selected-data="testData"></div>');
+        elem = angular.element('<div isteven-multi-select filter-url="/test/" output-data="selectedTests" button-label="name" item-label="name" tick-property="ticked" init-data="testData"></div>');
         template = compile(elem)($scope);
         $scope.$digest();
         let initButton = angular.element(elem.find('button')[0]);
