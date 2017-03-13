@@ -392,24 +392,22 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                         if (data.status === 'success') {
                             $scope.message = data.message;
                             $scope.filteredModel = data.data.filterRecord;
-                            // $scope.filterInputModel = data.data.filterRecord;
-                            if (!data.data.filterRecord || data.data.filterRecord.length === 0) {
-                                return false;
-                            }
-                            angular.forEach(data.data.filterRecord, function(value, key) {
-                                for (var i = 0; i < $scope.filterInputModel.length; i++) {
-                                    if ($scope.filterInputModel[i].id === value.id && $scope.filterInputModel[i].name === value.name) {
-                                        return;
+                            if(data.data.filterRecord && data.data.filterRecord.length > 0) {
+                                angular.forEach(data.data.filterRecord, function(value, key) {
+                                    for (var i = 0; i < $scope.filterInputModel.length; i++) {
+                                        if ($scope.filterInputModel[i].id === value.id && $scope.filterInputModel[i].name === value.name) {
+                                            return;
+                                        }
                                     }
-                                }
-                                $scope.filterInputModel.push({
-                                    id: value.id,
-                                    name: value.name
+                                    $scope.filterInputModel.push({
+                                        id: value.id,
+                                        name: value.name
+                                    });
                                 });
-                            });
-                            tickDefault($scope.filteredModel);
-                            // $scope.filterInputModel.reverse();
-                            $scope.prepareIndex();
+                                tickDefault($scope.filteredModel);
+                                // $scope.filterInputModel.reverse();
+                                $scope.prepareIndex();
+                            }
                         } else {
                             console.error(data.message);
                             $scope.message = data.message;
