@@ -109,7 +109,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
             // clear button clicked
             $scope.clearClicked = function(e) {
                 $scope.inputLabel.labelFilter = '';
-                // $scope.updateFilter();
+                $scope.updateFilter();
                 $scope.select('clear', e);
             };
 
@@ -127,7 +127,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
              * data formate is like {merchantid: selectedMerchants, custid: selectedCustomers}
              **/
             function getOtherFilterData() {
-                if(typeof $scope.otherFilterData !== 'undefined') {
+                if($scope.otherFilterData != null) {
                     var filter = '';
                     $scope.bean.filterBy = '';
                     for(var key in $scope.otherFilterData) {
@@ -287,22 +287,22 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                     
                     $scope.bean.otherFilterData = $scope.otherFilterData;
 
-                    getOtherFilterData();
+                    // getOtherFilterData();
 
                     $scope.busy = true;
                     $http.post($scope.filterUrl, $scope.bean)
                     .success(function(data, status, headers, config) {
                         if (data.status === 'success') {
                             $scope.message = data.message;
-                            if (!data.data.filterRecord || data.data.filterRecord.length === 0) {
+                            if(data.data.filterRecord && data.data.filterRecord.length > 0) {
+                                $scope.inputModel = data.data.filterRecord;
+                                $scope.filterInputModel = data.data.filterRecord;
+                                tickDefault($scope.filterInputModel);
+                                $scope.refreshButton();
+                                $scope.prepareIndex();
+                            } else {
                                 $scope.inputModel = [];
-                                return false;
                             }
-                            $scope.inputModel = data.data.filterRecord;
-                            $scope.filterInputModel = data.data.filterRecord;
-                            tickDefault($scope.filterInputModel);
-                            $scope.refreshButton();
-                            $scope.prepareIndex();
                         } else {
                             console.error(data.message);
                             $scope.message = data.message;
@@ -383,7 +383,6 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                     startTime = new Date().getTime();
                     var canceller = $q.defer();
                     if($scope.busy && new Date().getTime - startTime >= 5000) {
-                        console.log('get reponse time out');
                         canceller.resolve('get reponse time out'); 
                     }
                     $scope.busy = true;

@@ -32,11 +32,16 @@
  *  5. 验证多选模式下，分别选择一项，两项，三项，四项后，页面和outputData的变化，最后验证去掉一项后的变化；
  *  6. 验证单选模式下，选择一项后，点击另外一项后的页面和数据变化，并验证重复点击同一项时的变化；
  *  7. 验证多选模式下，选择一项后，点击另外一项后的页面和数据变化，并验证重复点击同一项时的变化；
- *  8. 单选模式下，输入完搜索字段后，在2s内不会去搜索，2s后会返回搜索结果，点击选择一条搜索结果后，再点击另外条结果，删除搜索字段后2s会显示所有结果；
- *  9. 多选模式下，输入完搜索字段后，在2s内不会去搜索，2s后会返回搜索结果，点击选择一条搜索结果后，再点击另外条结果，删除搜索字段后2s会显示所有结果；
- *  10. loadMore时，如果结果还没有返回时，继续loadMore，验证是否会给服务器端发送请求
- *  11. loadMore时，如果结果返回超时，继续loadMore，验证是否会给服务器端发送请求
- *  12. 和其他插件联动加载时，如果两个插件都有select-data ,验证当第一个插件已选项改变时，第二个插件的选项是否会跟随着改变，并验证重置后的值
+ *  8. 输入完搜索字段后，在2s内不会去搜索，2s后会返回搜索结果，点击选择一条搜索结果后，再点击另外条结果，在多选模式下，会同时选中两条；
+ *  9. 单选模式下，点击另外条结果后，会只选中最后点击的那条；
+ *  9. 测试单选模式下，如果配置了init-data，点击reset按钮后默认选中init-data里的数据；
+ *  10. 测试单选模式下，如果没有配置init-data，点击reset按钮后，清空选择；
+ *  11，测试多选模式下，如果配置了init-data，reset、selectnone和selectall按钮功能；
+ *  12. 测试多选模式下，如果没有配置init-data，reset、selectnone和selectall按钮功能；
+ *  13. 如果数据不超过20条，验证是否会触发loadmore功能；
+ *  14. 如果数据超过20条，验证是否会触发loadmore功能；
+ *  15. 和其他插件联动加载时，如果两个插件都有select-data ,验证当第一个插件已选项改变时，第二个插件的选项是否会跟随着改变，并验证重置后的值
+ *  16. 
  **/
 describe('multi-selector unit test', function() {
     var $scope, compile, $httpBackend, elem, template, test, $anchorScroll, $timeout;
@@ -495,7 +500,7 @@ describe('multi-selector unit test', function() {
         expect(titleButtons.eq(2).text()).to.equal('x 闵行');
     });
 
-    it('#6 it should tick other item after click other item when one time is ticked in single mode', function() {
+    it('#6 it should tick other item after click other item when one item is ticked in single mode', function() {
         $httpBackend.expect('POST', '/multiselector/test/').respond({
             status: "success",
             message: false,
@@ -623,7 +628,7 @@ describe('multi-selector unit test', function() {
         expect(titleButtons.eq(0).text()).to.equal('x 徐汇');
     });
 
-    it('#7 it should tick both items after click other item when one time is ticked in multi mode', function() {
+    it('#7 it should tick both items after click other item when one item is ticked in multi mode', function() {
         $httpBackend.expect('POST', '/multiselector/test/').respond({
             status: "success",
             message: false,
@@ -726,36 +731,70 @@ describe('multi-selector unit test', function() {
         expect(titleButtons.eq(1).text()).to.equal('x 徐汇');
     });
 
-    it('#8 it should tick one item when clicking two filtered items filtered after 2s in single mode', function() {
+    it('#8 it should be ok filtered after 2s in multi mode', function() {
+        $httpBackend.whenPOST('/multiselector/test/').respond(function(method, url, rData, headers) {
+            var data = {};
+            rData = JSON.parse(rData);
+            if (rData.flag === 'init') {
+                data = {
+                    status: 'success',
+                    message: false,
+                    data: {
+                        filterRecord: [
+                            { id: '1', name: '松江' },
+                            { id: '2', name: '徐汇' },
+                            { id: '3', name: '闵行' },
+                            { id: '4', name: '浦东' }
+                        ]
+                    }
+                };
+            } else if(rData.flag === 'filter') {
+                if (rData.filterName === '松江') {
+                    data = {
+                        status: 'success',
+                        message: false,
+                        data: {
+                            filterRecord: [
+                                { id: '1', name: '松江' },
+                                { id: '5', name: '松江2' }
+                            ]
+                        }
+                    };
+                } else if(rData.filterName === '松') {
+                    data = {
+                        status: 'success',
+                        message: false,
+                        data: {
+                            filterRecord: [
+                                { id: '1', name: '松江' },
+                                { id: '5', name: '松江2' },
+                                { id: '6', name: '松卫北路' }
+                            ]
+                        }
+                    };
+                } else {
+                    data = {
+                        status: 'success',
+                        message: false,
+                        data: {
+                            filterRecord: [
+                                { id: '1', name: '松江' },
+                                { id: '2', name: '徐汇' },
+                                { id: '3', name: '闵行' },
+                                { id: '4', name: '浦东' }
+                            ]
+                        }
+                    };
+                }
+            }
+            return [200, data, {}];
+        });
         template = angular.element('<div isteven-multi-select output-data="selectedTestIds" filter-url="/multiselector/test/" item-label="name" button-label="name" selector-id="testSelector">');
         elem = compile(template)($scope);
         $scope.$digest();
         $scope.selectedTestIds = [];
         expect(elem.attr('filter-url')).to.equal($scope.$$childTail.filterUrl);
         expect(elem.attr('selector-id')).to.equal($scope.$$childTail.selectorId);
-        $httpBackend.expect('POST', '/multiselector/test/').respond({
-            if($scope.$$childTail.bean.flag === 'init') {
-                status: "success",
-                message: false,
-                data: {
-                    filterRecord: [
-                        { id: '1', name: '松江1' },
-                        { id: '2', name: '松江2' },
-                        { id: '3', name: '闵行' },
-                        { id: '4', name: '浦东' }
-                    ]
-                }
-            } else if($scope.$$childTail.bean.flag === 'filter') {
-                status: "success",
-                message: false,
-                data: {
-                    filterRecord: [
-                        { id: '1', name: '松江1' },
-                        { id: '2', name: '松江2' }
-                    ]
-                }
-            }
-        });
         let initButton = angular.element(elem.find('button')[0]);
         initButton.triggerHandler('click');
         $httpBackend.flush();
@@ -765,39 +804,421 @@ describe('multi-selector unit test', function() {
         expect(inputModel[1].id).to.equal('2');
         expect(inputModel[2].id).to.equal('3');
         expect(inputModel[3].id).to.equal('4');
-        expect(inputModel[0].name).to.equal('松江1');
-        expect(inputModel[1].name).to.equal('松江2');
+        expect(inputModel[0].name).to.equal('松江');
+        expect(inputModel[1].name).to.equal('徐汇');
         expect(inputModel[2].name).to.equal('闵行');
         expect(inputModel[3].name).to.equal('浦东');
 
-        let sjItem = elem.find('div').children().eq(1).children().eq(0);
-        let xhItem = elem.find('div').children().eq(1).children().eq(1);
-        let mhItem = elem.find('div').children().eq(1).children().eq(2);
-        let pdItem = elem.find('div').children().eq(1).children().eq(3);
+        elem.find('input').val('松江');
+        elem.find('input').triggerHandler('input');
+        $timeout.flush(2000); // sleep 2s to wait filter
+        $httpBackend.flush();
+        expect($scope.$$childTail.filteredModel.length).to.equal(2);
+        expect($scope.$$childTail.filteredModel[0].id).to.equal('1');
+        expect($scope.$$childTail.filteredModel[0].name).to.equal('松江');
+        expect($scope.$$childTail.filteredModel[1].id).to.equal('5');
+        expect($scope.$$childTail.filteredModel[1].name).to.equal('松江2');
+
+        let filterItem = elem.find('div').children().eq(1).children().eq(0);
+        let filterItem2 = elem.find('div').children().eq(1).children().eq(1);
+        filterItem.triggerHandler('click'); // click first filtered item
+        // validate the outputData
+        expect($scope.$$childTail.outputData.length).to.equal(1);
+        expect($scope.$$childTail.outputData[0].id).to.equal('1');
+        expect($scope.$$childTail.outputData[0].name).to.equal('松江');
+
+        // validate the title
+        var titleButtons = elem.find('div').eq(1).children('div').eq(0).children('div').eq(2).children();
+        expect(titleButtons.length).to.equal(1);
+        expect(titleButtons.eq(0).text()).to.equal('x 松江');
+        expect(filterItem.attr('class')).to.contain('selected');
+        // validate the class of item
+        initButton.triggerHandler('click');
+        var sjItem = elem.find('div').children().eq(2).children().eq(0);
+        expect(sjItem.attr('class')).to.contain('selected');
+
+        // filter by '松江', then change the filtername to '松' and clear the filtername at last
+        elem.find('input').val('松江');
+        elem.find('input').triggerHandler('input');
+        $timeout.flush(2000); // sleep 2s to wait filter
+        // $httpBackend.flush();
+        expect($scope.$$childTail.filteredModel.length).to.equal(2);
+        expect($scope.$$childTail.filteredModel[0].id).to.equal('1');
+        expect($scope.$$childTail.filteredModel[0].name).to.equal('松江');
+        expect($scope.$$childTail.filteredModel[1].id).to.equal('5');
+        expect($scope.$$childTail.filteredModel[1].name).to.equal('松江2');
+        elem.find('input').val('松');
+        elem.find('input').triggerHandler('input');
+        $timeout.flush(2000); // sleep 2s to wait filter
+        $httpBackend.flush();
+        expect($scope.$$childTail.filteredModel.length).to.equal(3);
+        expect($scope.$$childTail.filteredModel[0].id).to.equal('1');
+        expect($scope.$$childTail.filteredModel[0].name).to.equal('松江');
+        expect($scope.$$childTail.filteredModel[1].id).to.equal('5');
+        expect($scope.$$childTail.filteredModel[1].name).to.equal('松江2');
+        expect($scope.$$childTail.filteredModel[2].id).to.equal('6');
+        expect($scope.$$childTail.filteredModel[2].name).to.equal('松卫北路');
+        filterItem = elem.find('div').children().eq(2).children().eq(0);
+        filterItem2 = elem.find('div').children().eq(2).children().eq(1);
+        let filterItem3 = elem.find('div').children().eq(2).children().eq(2);
+        expect(filterItem.attr('name')).to.equal('松江');
+        expect(filterItem2.attr('name')).to.equal('松江2');
+        expect(filterItem3.attr('name')).to.equal('松卫北路');
+        // validate the ticked item in inputmodel
+        expect($scope.$$childTail.filteredModel[0].ticked).to.equal(true);
+        expect(typeof($scope.$$childTail.filteredModel[1].ticked)).to.equal('undefined');
+        expect(typeof($scope.$$childTail.filteredModel[2].ticked)).to.equal('undefined');
+        // validate ther button label
+        expect(initButton.text()).to.contain('松江');
+        // validate the outputData
+        var outputData = $scope.$$childTail.outputData;
+        expect(outputData.length).to.equal(1);
+        expect(outputData[0].id).to.equal('1');
+        expect(outputData[0].name).to.equal('松江');
+        // validate the page attributes
+        expect(filterItem.attr('class')).to.contain('selected');
+        expect(filterItem.find('input').attr('checked')).to.equal('checked');
+        expect(typeof filterItem.find('span')).not.to.equal('undefined');
+        expect(filterItem2.attr('class')).not.to.contain('selected');
+        expect(typeof filterItem2.find('input').attr('checked')).to.equal('undefined');
+        expect(filterItem3.attr('class')).not.to.contain('selected');
+        expect(typeof filterItem3.find('input').attr('checked')).to.equal('undefined');
+        // validate the title
+        var titleButtons = elem.find('div').eq(1).children('div').eq(0).children('div').eq(2).children();
+        expect(titleButtons.length).to.equal(1);
+        expect(titleButtons.eq(0).text()).to.equal('x 松江');
+
+        filterItem3.triggerHandler('click');
+        // validate the ticked item in inputmodel
+        expect($scope.$$childTail.filteredModel[0].ticked).to.equal(true);
+        expect(typeof($scope.$$childTail.filteredModel[1].ticked)).to.equal('undefined');
+        expect($scope.$$childTail.filteredModel[2].ticked).to.equal(true);
+        // validate ther button label
+        expect(initButton.text()).to.contain('松江, ... 等2项');
+        // validate the outputData
+        var outputData = $scope.$$childTail.outputData;
+        expect(outputData.length).to.equal(2);
+        expect(outputData[0].id).to.equal('1');
+        expect(outputData[1].id).to.equal('6');
+        expect(outputData[0].name).to.equal('松江');
+        expect(outputData[1].name).to.equal('松卫北路');
+        // validate the page attributes
+        expect(filterItem.attr('class')).to.contain('selected');
+        expect(filterItem.find('input').attr('checked')).to.equal('checked');
+        expect(typeof filterItem.find('span')).not.to.equal('undefined');
+
+        expect(filterItem2.attr('class')).not.to.contain('selected');
+        expect(typeof filterItem2.find('input').attr('checked')).to.equal('undefined');
+        
+
+        expect(filterItem3.attr('class')).to.contain('selected');
+        expect(filterItem3.find('input').attr('checked')).to.equal('checked');
+        expect(typeof filterItem3.find('span')).not.to.equal('undefined');
+        // validate the title
+        var titleButtons = elem.find('div').eq(1).children('div').eq(0).children('div').eq(2).children();
+        expect(titleButtons.length).to.equal(2);
+        expect(titleButtons.eq(0).text()).to.equal('x 松江');
+        expect(titleButtons.eq(1).text()).to.equal('x 松卫北路');
+
+        filterItem3.triggerHandler('click');
+
+        // validate the ticked item in inputmodel
+        expect($scope.$$childTail.filteredModel[0].ticked).to.equal(true);
+        expect(typeof($scope.$$childTail.filteredModel[1].ticked)).to.equal('undefined');
+        expect($scope.$$childTail.filteredModel[2].ticked).to.equal(false);
+        // validate ther button label
+        expect(initButton.text()).to.contain('松江');
+        // validate the outputData
+        var outputData = $scope.$$childTail.outputData;
+        expect(outputData.length).to.equal(1);
+        expect(outputData[0].id).to.equal('1');
+        expect(outputData[0].name).to.equal('松江');
+        // validate the page attributes
+        expect(filterItem.attr('class')).to.contain('selected');
+        expect(filterItem.find('input').attr('checked')).to.equal('checked');
+        expect(typeof filterItem.find('span')).not.to.equal('undefined');
+
+        expect(filterItem2.attr('class')).not.to.contain('selected');
+        expect(typeof filterItem2.find('input').attr('checked')).to.equal('undefined');
+
+        expect(filterItem3.attr('class')).not.to.contain('selected');
+        expect(typeof filterItem3.find('input').attr('checked')).to.equal('undefined');
+
+        // validate the title
+        var titleButtons = elem.find('div').eq(1).children('div').eq(0).children('div').eq(2).children();
+        expect(titleButtons.length).to.equal(1);
+        expect(titleButtons.eq(0).text()).to.equal('x 松江');
+    });
+
+    it('#9 it should be ok filtered after 2s in single mode', function() {
+        $httpBackend.whenPOST('/multiselector/test/').respond(function(method, url, rData, headers) {
+            var data = {};
+            rData = JSON.parse(rData);
+            if (rData.flag === 'init') {
+                data = {
+                    status: 'success',
+                    message: false,
+                    data: {
+                        filterRecord: [
+                            { id: '1', name: '松江' },
+                            { id: '2', name: '徐汇' },
+                            { id: '3', name: '闵行' },
+                            { id: '4', name: '浦东' }
+                        ]
+                    }
+                };
+            } else if(rData.flag === 'filter') {
+                if (rData.filterName === '松江') {
+                    data = {
+                        status: 'success',
+                        message: false,
+                        data: {
+                            filterRecord: [
+                                { id: '1', name: '松江' },
+                                { id: '5', name: '松江2' }
+                            ]
+                        }
+                    };
+                } else if(rData.filterName === '松') {
+                    data = {
+                        status: 'success',
+                        message: false,
+                        data: {
+                            filterRecord: [
+                                { id: '1', name: '松江' },
+                                { id: '5', name: '松江2' },
+                                { id: '6', name: '松卫北路' }
+                            ]
+                        }
+                    };
+                } else {
+                    data = {
+                        status: 'success',
+                        message: false,
+                        data: {
+                            filterRecord: [
+                                { id: '1', name: '松江' },
+                                { id: '2', name: '徐汇' },
+                                { id: '3', name: '闵行' },
+                                { id: '4', name: '浦东' }
+                            ]
+                        }
+                    };
+                }
+            }
+            return [200, data, {}];
+        });
+        template = angular.element('<div isteven-multi-select output-data="selectedTestIds" filter-url="/multiselector/test/" item-label="name" button-label="name" selector-id="testSelector" selection-mode="single">');
+        elem = compile(template)($scope);
+        $scope.$digest();
+        $scope.selectedTestIds = [];
+        expect(elem.attr('filter-url')).to.equal($scope.$$childTail.filterUrl);
+        expect(elem.attr('selector-id')).to.equal($scope.$$childTail.selectorId);
+        let initButton = angular.element(elem.find('button')[0]);
+        initButton.triggerHandler('click');
+        $httpBackend.flush();
+
+        inputModel = $scope.$$childTail.inputModel;
+        expect(inputModel[0].id).to.equal('1');
+        expect(inputModel[1].id).to.equal('2');
+        expect(inputModel[2].id).to.equal('3');
+        expect(inputModel[3].id).to.equal('4');
+        expect(inputModel[0].name).to.equal('松江');
+        expect(inputModel[1].name).to.equal('徐汇');
+        expect(inputModel[2].name).to.equal('闵行');
+        expect(inputModel[3].name).to.equal('浦东');
 
         elem.find('input').val('松江');
-        elem.find('input').triggerHandler('change');
-        // $timeout.flush(2000); // sleep 2s to wait filter
-        // $httpBackend.expect('POST', '/multiselector/test/').respond({
-        //     status: "success",
-        //     message: false,
-        //     data: {
-        //         filterRecord: [
-        //             { id: '1', name: '松江1' },
-        //             { id: '2', name: '松江2' }
-        //         ]
-        //     }
-        // });
+        elem.find('input').triggerHandler('input');
+        $timeout.flush(2000); // sleep 2s to wait filter
         $httpBackend.flush();
-        console.log($scope.$$childTail.bean);
+        expect($scope.$$childTail.filteredModel.length).to.equal(2);
+        expect($scope.$$childTail.filteredModel[0].id).to.equal('1');
+        expect($scope.$$childTail.filteredModel[0].name).to.equal('松江');
+        expect($scope.$$childTail.filteredModel[1].id).to.equal('5');
+        expect($scope.$$childTail.filteredModel[1].name).to.equal('松江2');
+
+        let filterItem = elem.find('div').children().eq(1).children().eq(0);
+        let filterItem2 = elem.find('div').children().eq(1).children().eq(1);
+        filterItem.triggerHandler('click'); // click first filtered item
+        // validate the outputData
+        expect($scope.$$childTail.outputData.length).to.equal(1);
+        expect($scope.$$childTail.outputData[0].id).to.equal('1');
+        expect($scope.$$childTail.outputData[0].name).to.equal('松江');
+
+        // validate the title
+        var titleButtons = elem.find('div').eq(1).children('div').eq(0).children('div').eq(2).children();
+        expect(titleButtons.length).to.equal(1);
+        expect(titleButtons.eq(0).text()).to.equal('x 松江');
+        expect(filterItem.attr('class')).to.contain('selected');
+        // validate the class of item
+        initButton.triggerHandler('click');
+        var sjItem = elem.find('div').children().eq(2).children().eq(0);
+        expect(sjItem.attr('class')).to.contain('selected');
+
+        // filter by '松江', then change the filtername to '松' and clear the filtername at last
+        elem.find('input').val('松江');
+        elem.find('input').triggerHandler('input');
+        $timeout.flush(2000); // sleep 2s to wait filter
+        // $httpBackend.flush();
+        expect($scope.$$childTail.filteredModel.length).to.equal(5);
+        expect($scope.$$childTail.filteredModel[0].id).to.equal('1');
+        expect($scope.$$childTail.filteredModel[1].id).to.equal('2');
+        expect($scope.$$childTail.filteredModel[2].id).to.equal('3');
+        expect($scope.$$childTail.filteredModel[3].id).to.equal('4');
+        expect($scope.$$childTail.filteredModel[4].id).to.equal('5');
+        expect($scope.$$childTail.filteredModel[0].name).to.equal('松江');
+        expect($scope.$$childTail.filteredModel[1].name).to.equal('徐汇');
+        expect($scope.$$childTail.filteredModel[2].name).to.equal('闵行');
+        expect($scope.$$childTail.filteredModel[3].name).to.equal('浦东');
+        expect($scope.$$childTail.filteredModel[4].name).to.equal('松江2');
+        elem.find('input').val('松');
+        elem.find('input').triggerHandler('input');
+        $timeout.flush(2000); // sleep 2s to wait filter
+        $httpBackend.flush();
         console.log($scope.$$childTail.filteredModel);
+        expect($scope.$$childTail.filteredModel.length).to.equal(3);
+        expect($scope.$$childTail.filteredModel[0].id).to.equal('1');
+        expect($scope.$$childTail.filteredModel[0].name).to.equal('松江');
+        expect($scope.$$childTail.filteredModel[1].id).to.equal('5');
+        expect($scope.$$childTail.filteredModel[1].name).to.equal('松江2');
+        expect($scope.$$childTail.filteredModel[2].id).to.equal('6');
+        expect($scope.$$childTail.filteredModel[2].name).to.equal('松卫北路');
+        filterItem = elem.find('div').children().eq(2).children().eq(0);
+        filterItem2 = elem.find('div').children().eq(2).children().eq(1);
+        let filterItem3 = elem.find('div').children().eq(2).children().eq(2);
+        expect(filterItem.attr('name')).to.equal('松江');
+        expect(filterItem2.attr('name')).to.equal('松江2');
+        expect(filterItem3.attr('name')).to.equal('松卫北路');
+        // validate the ticked item in inputmodel
+        expect($scope.$$childTail.filteredModel[0].ticked).to.equal(true);
+        expect(typeof($scope.$$childTail.filteredModel[1].ticked)).to.equal('undefined');
+        expect(typeof($scope.$$childTail.filteredModel[2].ticked)).to.equal('undefined');
+        // validate ther button label
+        expect(initButton.text()).to.contain('松江');
+        // validate the outputData
+        var outputData = $scope.$$childTail.outputData;
+        expect(outputData.length).to.equal(1);
+        expect(outputData[0].id).to.equal('1');
+        expect(outputData[0].name).to.equal('松江');
+        // validate the page attributes
+        expect(filterItem.attr('class')).to.contain('selected');
+        expect(filterItem.find('input').attr('checked')).to.equal('checked');
+        expect(typeof filterItem.find('span')).not.to.equal('undefined');
+        expect(filterItem2.attr('class')).not.to.contain('selected');
+        expect(typeof filterItem2.find('input').attr('checked')).to.equal('undefined');
+        expect(filterItem3.attr('class')).not.to.contain('selected');
+        expect(typeof filterItem3.find('input').attr('checked')).to.equal('undefined');
+        // validate the title
+        var titleButtons = elem.find('div').eq(1).children('div').eq(0).children('div').eq(2).children();
+        expect(titleButtons.length).to.equal(1);
+        expect(titleButtons.eq(0).text()).to.equal('x 松江');
+
+        filterItem3.triggerHandler('click');
+        // validate the ticked item in inputmodel
+        expect($scope.$$childTail.filteredModel[0].ticked).to.equal(false);
+        expect(typeof($scope.$$childTail.filteredModel[1].ticked)).to.equal('undefined');
+        expect($scope.$$childTail.filteredModel[2].ticked).to.equal(true);
+        // validate ther button label
+        expect(initButton.text()).to.contain('松卫北路');
+        // validate the outputData
+        var outputData = $scope.$$childTail.outputData;
+        expect(outputData.length).to.equal(1);
+        expect(outputData[0].id).to.equal('6');
+        expect(outputData[0].name).to.equal('松卫北路');
+        // validate the page attributes
+        expect(filterItem.attr('class')).not.to.contain('selected');
+        expect(typeof filterItem.find('input').attr('checked')).to.equal('undefined');
+
+        expect(filterItem2.attr('class')).not.to.contain('selected');
+        expect(typeof filterItem2.find('input').attr('checked')).to.equal('undefined');
+        
+
+        expect(filterItem3.attr('class')).to.contain('selected');
+        expect(filterItem3.find('input').attr('checked')).to.equal('checked');
+        expect(typeof filterItem3.find('span')).not.to.equal('undefined');
+        // validate the title
+        var titleButtons = elem.find('div').eq(1).children('div').eq(0).children('div').eq(2).children();
+        expect(titleButtons.length).to.equal(1);
+        expect(titleButtons.eq(1).text()).to.equal('x 松卫北路');
+
+        filterItem3.triggerHandler('click');
+
+        // validate the ticked item in inputmodel
+        expect($scope.$$childTail.filteredModel[0].ticked).to.equal(false);
+        expect(typeof($scope.$$childTail.filteredModel[1].ticked)).to.equal('undefined');
+        expect($scope.$$childTail.filteredModel[2].ticked).to.equal(false);
+        // validate ther button label
+        expect(initButton.text()).to.equal('');
+        // validate the outputData
+        var outputData = $scope.$$childTail.outputData;
+        expect(outputData.length).to.equal(0);
+        // validate the page attributes
+        expect(filterItem.attr('class')).not.to.contain('selected');
+        expect(typeof filterItem.find('input').attr('checked')).to.equal('undefined');
+
+        expect(filterItem2.attr('class')).not.to.contain('selected');
+        expect(typeof filterItem2.find('input').attr('checked')).to.equal('undefined');
+
+        expect(filterItem3.attr('class')).not.to.contain('selected');
+        expect(typeof filterItem3.find('input').attr('checked')).to.equal('undefined');
+
     });
 
-    xit('#9 it should tick two items when clicking two filtered items filtered after 2s in multi mode', function() {
+    xit('#10 it should tick items in init-data when init-data was setted in single mode', function() {
+        $httpBackend.expect('POST', '/admin/multiselector/intitdata').respond({
+            status: "success",
+            message: false,
+            data: {
+                filterRecord: [
+                    { id: '1', name: '松江' }
+                ]
+            }
+        });
+        $httpBackend.expect('POST', '/multiselector/test/').respond({
+            status: "success",
+            message: false,
+            data: {
+                filterRecord: [
+                    { id: '1', name: '松江' },
+                    { id: '2', name: '徐汇' },
+                    { id: '3', name: '闵行' },
+                    { id: '4', name: '浦东' }
+                ]
+            }
+        });
+        $scope.testInitData = '1';
+        template = angular.element('<div isteven-multi-select output-data="selectedTestIds" filter-url="/multiselector/test/" item-label="name" button-label="name" selector-id="testSelector" selection-mode="single" init-data="testInitData">');
+        elem = compile(template)($scope);
+        $scope.$digest();
+        $scope.selectedTestIds = [];
+        expect(angular.element(elem[0]).attr('filter-url')).to.equal($scope.$$childTail.filterUrl);
+        let selectorId = angular.element(elem[0]).attr('selector-id');
+        expect(selectorId).to.equal($scope.$$childTail.selectorId);
+        // inputModel is empty before click the selector
+        expect($scope.$$childTail.inputModel.length).to.equal(0);
+        expect(typeof($scope.$$childTail.outputData)).to.equal('undefined');
+
+        let initButton = angular.element(elem.find('button')[0]);
+        initButton.triggerHandler('click');
+        $httpBackend.flush();
+        expect($scope.$$childTail.outputData.length).to.equal(1);
+        expect($scope.$$childTail.outputData[0].id).to.equal('1');
+        expect($scope.$$childTail.outputData[0].name).to.equal('松江');
+
+        // check the inputmodel
+        inputModel = $scope.$$childTail.inputModel;
+        expect(inputModel[0].id).to.equal('1');
+        expect(inputModel[1].id).to.equal('2');
+        expect(inputModel[2].id).to.equal('3');
+        expect(inputModel[3].id).to.equal('4');
+        expect(inputModel[0].name).to.equal('松江');
+        expect(inputModel[1].name).to.equal('徐汇');
+        expect(inputModel[2].name).to.equal('闵行');
+        expect(inputModel[3].name).to.equal('浦东');
+
 
     });
-
-    xit('#9_', function() {});
 
     xit('#10_', function() {});
 
