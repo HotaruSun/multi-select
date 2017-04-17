@@ -43,14 +43,17 @@ module.exports = function (grunt) {
                 options: {
                     globals: {
                         angular: false,
-			describe: false,
-			beforeEach: false,
-			module: false,
-			inject: false,
-			afterEach: false,
-			it: false,
-			xit: false,
-			expect: false
+                        window: false,
+                        describe: false,
+                        beforeEach: false,
+                        module: false,
+                        inject: false,
+                        afterEach: false,
+                        it: false,
+                        xit: false,
+                        expect: false,
+                        window: false,
+                        document: false
                     }
                 },
                 files: {

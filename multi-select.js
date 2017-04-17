@@ -1031,19 +1031,41 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                                 }
                             }
                         });
-                        $scope.refreshOutputData();
+                        angular.forEach($scope.inputModel, function(value, key) {
+                            if (typeof value !== 'undefined' && value[attrs.disableProperty] !== true) {
+                                if (typeof value[attrs.groupProperty] === 'undefined') {
+                                    value[$scope.tickProperty] = false;
+                                }
+                            }
+                        });
+                        $scope.outputData = [];
                         $scope.refreshButton();
                         $scope.onSelectNone();
                         break;
                     case 'RESET':
-                        angular.forEach($scope.filteredModel, function(value, key) {
-                            if (typeof value[attrs.groupProperty] === 'undefined' && typeof value !== 'undefined' && value[attrs.disableProperty] !== true) {
-                                var temp = value[$scope.indexProperty];
-                                value[$scope.tickProperty] = false;
-                            }
-                        });
-                        $scope.refreshOutputData();
-                        $scope.refreshButton();
+                        if($scope.initData) {
+                            angular.forEach($scope.filteredModel, function(value, key) {
+                                if (typeof value !== 'undefined' && value[attrs.disableProperty] !== true) {
+                                    if (typeof value[attrs.groupProperty] === 'undefined') {
+                                        value[$scope.tickProperty] = false;
+                                    }
+                                }
+                            });
+                            $scope.outputData = [];
+                            $scope.inputModel = [];
+                            $scope.refreshButton();
+                            $scope.init();
+                            $scope.filter();
+                        } else {
+                            angular.forEach($scope.filteredModel, function(value, key) {
+                                if (typeof value[attrs.groupProperty] === 'undefined' && typeof value !== 'undefined' && value[attrs.disableProperty] !== true) {
+                                    var temp = value[$scope.indexProperty];
+                                    value[$scope.tickProperty] = false;
+                                }
+                            });
+                            $scope.refreshOutputData();
+                            $scope.refreshButton();
+                        }
                         $scope.onReset();
                         break;
                     case 'CLEAR':
@@ -1375,7 +1397,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
         '<input name="inputFilter" placeholder="{{lang.search}}" type="text"' +
         'ng-click="select( \'filter\', $event )" ' +
         'ng-model="inputLabel.labelFilter" ' +
-        'ng-change="searchChanged()" class="inputFilter" ng-model-options="{debounce: 2000}"' +
+        'ng-change="searchChanged()" class="inputFilter" ng-model-options="{debounce: 1500}"' +
         '/>' +
         // clear button
         '<button type="button" class="clearButton" ng-click="clearClicked($event)" >×</button> ' +
