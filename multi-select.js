@@ -769,7 +769,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                     tempObj = {};
 
                 // if (!$scope.filterInputModel || $scope.filterInputModel.length === 0) {
-                $scope.filterInputModel = $scope.filteredModel;
+                $scope.filterInputModel = $scope.inputModel;
                 // }
                 // v4.0.0
                 if (typeof attrs.outputProperties !== 'undefined') {
