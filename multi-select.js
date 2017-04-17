@@ -769,7 +769,7 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                     tempObj = {};
 
                 // if (!$scope.filterInputModel || $scope.filterInputModel.length === 0) {
-                $scope.filterInputModel = $scope.inputModel;
+                $scope.filterInputModel = $scope.filteredModel;
                 // }
                 // v4.0.0
                 if (typeof attrs.outputProperties !== 'undefined') {
@@ -1012,13 +1012,13 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                                 }
                             }
                         });
-                        angular.forEach($scope.filterInputModel, function(value, key) {
-                            if (typeof value !== 'undefined' && value[attrs.disableProperty] !== true) {
-                                if (typeof value[attrs.groupProperty] === 'undefined') {
-                                    value[$scope.tickProperty] = true;
-                                }
-                            }
-                        });
+                        // angular.forEach($scope.filterInputModel, function(value, key) {
+                        //     if (typeof value !== 'undefined' && value[attrs.disableProperty] !== true) {
+                        //         if (typeof value[attrs.groupProperty] === 'undefined') {
+                        //             value[$scope.tickProperty] = true;
+                        //         }
+                        //     }
+                        // });
                         $scope.refreshOutputData();
                         $scope.refreshButton();
                         $scope.onSelectAll();
