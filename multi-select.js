@@ -1063,7 +1063,15 @@ angular.module('isteven-multi-select', ['ng']).directive('istevenMultiSelect', [
                                     value[$scope.tickProperty] = false;
                                 }
                             });
-                            $scope.refreshOutputData();
+                            angular.forEach($scope.inputModel, function(value, key) {
+                                if (typeof value !== 'undefined' && value[attrs.disableProperty] !== true) {
+                                    if (typeof value[attrs.groupProperty] === 'undefined') {
+                                        value[$scope.tickProperty] = false;
+                                    }
+                                }
+                            });
+                            $scope.outputData = [];
+                            // $scope.refreshOutputData();
                             $scope.refreshButton();
                         }
                         $scope.onReset();
